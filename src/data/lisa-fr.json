@@ -1,0 +1,56 @@
+{
+  "intro": {
+    "progress": 0.08,
+    "next": "chat",
+    "isCompact": true,
+    "dialog": {
+      "list": {
+        "ava.intro.1": "Bonjour, comment pouvons-nous vous aider?<br><br>Je suis AVA pour Sewer Squad — plomberie et drains dans le GTA, 24/7."
+      }
+    },
+    "media": []
+  },
+  "chat": {
+    "progress": 0.2,
+    "dialog": {
+      "list": {
+        "ava.chat.1": "Urgence, soumission, rendez-vous ou question — je suis là."
+      }
+    },
+    "choices": [
+      {
+        "label": "Urgence",
+        "modelUpdate": { "key": "ask", "value": "C’est une urgence — j’ai besoin d’aide maintenant." }
+      },
+      {
+        "label": "Obtenir un devis",
+        "modelUpdate": { "key": "ask", "value": "Je voudrais un devis pour de la plomberie ou un drain." }
+      },
+      {
+        "label": "Prendre rendez-vous",
+        "modelUpdate": { "key": "ask", "value": "Je voudrais prendre rendez-vous." }
+      },
+      {
+        "label": "Clairage 88 $ + caméra",
+        "modelUpdate": { "key": "ask", "value": "Parle-moi du clairage de ligne d’égout à 88 $ avec inspection caméra." }
+      }
+    ],
+    "media": []
+  },
+  "form-error": {
+    "progress": 1,
+    "showErrors": true,
+    "dialog": {
+      "list": {
+        "ava.form-error.1": "Oups — un petit bug. Réessaie!"
+      }
+    },
+    "choices": [
+      {
+        "label": "Retour au chat",
+        "emit": "form-retry"
+      }
+    ],
+    "media": []
+  }
+}

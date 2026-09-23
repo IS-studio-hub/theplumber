@@ -1,0 +1,13 @@
+name = "ginny-dooogs-api"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Workers AI needs a claimed Cloudflare account. Temporary preview accounts often
+# fail with AI bindings — chat uses free LLM + optional Ollama instead.
+# Re-enable after `wrangler login` + claim:
+# [ai]
+# binding = "AI"
+
+[vars]
+OLLAMA_CHAT_MODEL = "llama3.1:8b"
+# OLLAMA_BASE_URL optional — set to a public Ollama host if you have one
