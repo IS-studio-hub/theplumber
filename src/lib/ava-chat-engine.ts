@@ -791,7 +791,7 @@ export async function runAvaChatTurn(
     const intent = detectIntent(text);
     const quick = kbAnswer(text);
 
-    if ((intent === "question" || (!intent && quick)) && intent !== "booking") {
+    if (intent === "question" || (!intent && quick)) {
       lead.intent = intent || "question";
       lead.status = "conversation";
       const before = emptyKeys(lead);
@@ -839,7 +839,7 @@ export async function runAvaChatTurn(
     lead.intent = intent;
     const before = emptyKeys(lead);
     harvestFields(lead, text, null);
-    if (!lead.problem && intent !== "question") {
+    if (!lead.problem) {
       const snip = extractProblemSnippet(text);
       if (snip) {
         lead.problem = snip;
