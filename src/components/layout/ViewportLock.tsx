@@ -56,10 +56,15 @@ export function ViewportLock() {
         }
 
         if (window.scrollX !== 0 || window.scrollY !== 0) {
-          window.scrollTo(0, 0);
+          // Don't fight document scroll on dashboard / privacy pages
+          if (!root.classList.contains("allow-page-scroll")) {
+            window.scrollTo(0, 0);
+          }
         }
-        if (root.scrollTop) root.scrollTop = 0;
-        if (document.body.scrollTop) document.body.scrollTop = 0;
+        if (!root.classList.contains("allow-page-scroll")) {
+          if (root.scrollTop) root.scrollTop = 0;
+          if (document.body.scrollTop) document.body.scrollTop = 0;
+        }
       });
     };
 

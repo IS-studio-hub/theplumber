@@ -15,7 +15,7 @@ const copy = {
     text: "For the full 3D dog experience, open this page in Safari or Chrome. Chat still works here.",
     open: "Open in browser",
     copyLink: "Copy link",
-    copied: "Link copied — paste it in Safari or Chrome",
+    copied: "Link copied. Paste it in Safari or Chrome",
     tipIos: "Tip: tap ⋯ → Open in Safari",
     tipAndroid: "Tip: tap ⋮ → Open in Chrome",
     dismiss: "Keep chatting here",
@@ -24,7 +24,7 @@ const copy = {
     text: "Pour la 3D complète, ouvre cette page dans Safari ou Chrome. Le chat marche déjà ici.",
     open: "Ouvrir dans le navigateur",
     copyLink: "Copier le lien",
-    copied: "Lien copié — colle-le dans Safari ou Chrome",
+    copied: "Lien copié. Colle-le dans Safari ou Chrome",
     tipIos: "Astuce: ⋯ → Ouvrir dans Safari",
     tipAndroid: "Astuce: ⋮ → Ouvrir dans Chrome",
     dismiss: "Continuer le chat ici",
@@ -103,7 +103,7 @@ export function InAppBrowserBanner({ locale }: { locale: Locale }) {
           {t.open}
         </button>
         <button type="button" className="c-inapp_btn -secondary" onClick={() => void copyUrl()}>
-          {copied ? t.copied.split("—")[0]?.trim() || t.copied : t.copyLink}
+          {copied ? t.copied.split(".")[0]?.trim() || t.copied : t.copyLink}
         </button>
         <button type="button" className="c-inapp_btn -ghost" onClick={dismiss}>
           {t.dismiss}

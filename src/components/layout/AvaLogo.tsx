@@ -1,44 +1,27 @@
 "use client";
 
-/** AVA wordmark — text brand for the plumber product */
+import { withBase } from "@/lib/base-path";
+
+const LOGO_SRC = "/assets/images/sewer-squad-logo.png";
+
+/** Sewer Squad brand mark */
 export function AvaLogo({
   className = "",
-  title = "AVA",
-  invert = false,
+  title = "Sewer Squad",
 }: {
   className?: string;
   title?: string;
   invert?: boolean;
 }) {
   return (
-    <span
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       className={className}
+      src={withBase(LOGO_SRC)}
+      alt={title}
       title={title}
-      style={{
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        lineHeight: 1.05,
-        fontFamily: "var(--font-display-family), var(--font-ui)",
-        fontWeight: 500,
-        letterSpacing: "0.04em",
-        color: invert ? "#fff" : "#111",
-        userSelect: "none",
-      }}
-      aria-label={title}
-    >
-      <span style={{ fontSize: "1.55rem" }}>AVA</span>
-      <span
-        style={{
-          fontSize: "0.62rem",
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          opacity: 0.72,
-          fontWeight: 400,
-        }}
-      >
-        Sewer Squad
-      </span>
-    </span>
+      width={504}
+      height={277}
+    />
   );
 }

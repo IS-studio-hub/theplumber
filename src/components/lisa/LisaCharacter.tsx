@@ -9,17 +9,47 @@ import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLigh
 
 import { withBase } from "@/lib/base-path";
 import { isInAppBrowser } from "@/lib/in-app-browser";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 export type CharacterClip = "idle" | "talk" | "wave";
 
-const MODEL_PATH = "/assets/ava/character/ava.glb?v=1";
-const STAGE = 0xc9c9c9;
+const MODEL_BASE = "/assets/ava/character/ava.glb";
+const MODEL_VERSION_URL = "/assets/ava/character/version.json";
+/** Negative pitches the camera so the portrait sits lower on screen. */
+const VIEW_LIFT = -0.12;
+const FRAME_REV = 56;
+const STAGE = 0xb8cc88;
+const STAGE_DEEP = 0x8fa06a;
+
+function makeStageBackdrop(): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 8;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, "#d2e4a8");
+    grad.addColorStop(0.42, "#b8cc88");
+    grad.addColorStop(1, "#8fa06a");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 8, 256);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+/** How far the user's Look target slides in front of the face. */
+const LOOK_RANGE_X = 0.48;
+const LOOK_RANGE_Y = 0.30;
 
 const STILL_EPS = 0.0008;
 const STILL_FRAMES_TO_FREEZE = 16;
 
 type LookJoint = {
-  bone: THREE.Bone;
+  bone: THREE.Object3D;
   bindQuat: THREE.Quaternion;
   weight: number;
   maxYaw: number;
@@ -27,7 +57,6 @@ type LookJoint = {
   /** 1 = full yaw, 0 = no left/right (neck-only turn). */
   yawScale: number;
 };
-
 
 function isMobileOrTabletDevice(): boolean {
   if (typeof window === "undefined") return false;
@@ -46,17 +75,15 @@ function needsIosMotionPermission(): boolean {
   return typeof DOE.requestPermission === "function";
 }
 
-function findBone(root: THREE.Object3D, names: string[]): THREE.Bone | null {
+function findBone(root: THREE.Object3D, names: string[]): THREE.Object3D | null {
   for (const name of names) {
     const obj = root.getObjectByName(name);
-    if (obj && (obj as THREE.Bone).isBone) return obj as THREE.Bone;
+    if (obj) return obj;
   }
-  let found: THREE.Bone | null = null;
+  let found: THREE.Object3D | null = null;
   root.traverse((o) => {
     if (found) return;
-    if ((o as THREE.Bone).isBone && names.includes(o.name)) {
-      found = o as THREE.Bone;
-    }
+    if (names.includes(o.name)) found = o;
   });
   return found;
 }
@@ -78,10 +105,41 @@ export function LisaCharacter({
   const clipRef = useRef<CharacterClip>(clip);
   const enableMotionRef = useRef<(() => void) | null>(null);
   const [showMotionPrompt, setShowMotionPrompt] = useState(false);
+  /** Bumped when Blender saves → version.json changes (autosync). */
+  const [modelRev, setModelRev] = useState(() => `force-${Date.now()}`);
 
   useEffect(() => {
     clipRef.current = clip;
   }, [clip]);
+
+  // Poll Blender autosync version so the GLB reloads without a hard refresh.
+  useEffect(() => {
+    let cancelled = false;
+    let last = "";
+    const tick = async () => {
+      try {
+        const res = await fetch(withBase(`${MODEL_VERSION_URL}?t=${Date.now()}`), {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { v?: string | number };
+        const next = String(data.v ?? "");
+        if (!next || next === last || cancelled) return;
+        const prev = last;
+        last = next;
+        // Always apply the first real stamp; then only on change.
+        if (!prev || prev !== next) setModelRev(next);
+      } catch {
+        /* ignore — file may not exist yet */
+      }
+    };
+    void tick();
+    const id = window.setInterval(tick, 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -114,23 +172,29 @@ export function LisaCharacter({
     renderer.setClearColor(STAGE, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = lite ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = lite ? 1 : 1.12;
+    renderer.toneMappingExposure = lite ? 0.92 : 0.98;
     renderer.shadowMap.enabled = !lite;
-    if (!lite) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    if (!lite) {
+      // Soft shadows; only rebuild maps when the neck actually moves
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.autoUpdate = false;
+      renderer.shadowMap.needsUpdate = true;
+    }
     renderer.domElement.style.touchAction = "none";
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(STAGE);
-    if (!lite) scene.fog = new THREE.Fog(STAGE, 4.2, 11);
+    const backdropTex = makeStageBackdrop();
+    scene.background = backdropTex;
+    scene.fog = new THREE.Fog(STAGE_DEEP, lite ? 8 : 7.2, lite ? 16 : 15);
 
     let pmrem: THREE.PMREMGenerator | null = null;
     if (!lite) {
       try {
         pmrem = new THREE.PMREMGenerator(renderer);
-        const env = pmrem.fromScene(new RoomEnvironment(), 0.02).texture;
+        const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
         scene.environment = env;
-        scene.environmentIntensity = 0.38;
+        scene.environmentIntensity = 0.28;
       } catch {
         /* env map optional */
       }
@@ -140,15 +204,14 @@ export function LisaCharacter({
     camera.position.set(0, 1.25, 2.6);
     camera.lookAt(0, 1.1, 0);
 
-    // ——— Lighting ———
-    // Lite (Safari/mobile): cheap lights that still read as soft studio
-    // Full (desktop): rich area lights + animated accents
-    scene.add(new THREE.AmbientLight(0xc8c4c0, lite ? 0.55 : 0.38));
-    scene.add(new THREE.HemisphereLight(0xf5f0ea, 0x8a8a90, lite ? 0.55 : 0.42));
+    // Softly lit room — brighter than dim, still not blown out.
+    scene.add(new THREE.AmbientLight(0xc8c2b8, lite ? 0.18 : 0.035));
+    scene.add(new THREE.HemisphereLight(0xfff0e0, 0x3a454e, lite ? 0.26 : 0.16));
 
     let key: THREE.RectAreaLight | THREE.DirectionalLight;
     let fill: THREE.RectAreaLight | THREE.DirectionalLight;
     let keySun: THREE.DirectionalLight;
+    let softSun: THREE.DirectionalLight | null = null;
     let rim: THREE.SpotLight | null = null;
     let kick: THREE.SpotLight | null = null;
     let bounce: THREE.RectAreaLight | null = null;
@@ -158,95 +221,118 @@ export function LisaCharacter({
     let cheek: THREE.SpotLight | null = null;
 
     if (lite) {
-      key = new THREE.DirectionalLight(0xfff2e4, 1.15);
-      key.position.set(1.15, 2.15, 1.55);
+      key = new THREE.DirectionalLight(0xffd2a8, 1.35);
+      key.position.set(1.85, 2.45, 1.15);
       scene.add(key);
 
-      fill = new THREE.DirectionalLight(0xdde6f5, 0.55);
-      fill.position.set(-1.55, 1.35, 1.25);
+      fill = new THREE.DirectionalLight(0x8aa6c8, 0.2);
+      fill.position.set(-1.9, 1.05, 1.35);
       scene.add(fill);
 
-      keySun = new THREE.DirectionalLight(0xffe8d2, 0.35);
-      keySun.position.set(1.6, 2.8, 1.9);
+      keySun = new THREE.DirectionalLight(0xffc48a, 0.4);
+      keySun.position.set(2.1, 2.9, 0.85);
       keySun.castShadow = false;
       scene.add(keySun);
       keySun.target.position.set(0, 1.2, 0);
       scene.add(keySun.target);
     } else {
-      key = new THREE.RectAreaLight(0xfff2e4, 4.2, 2.8, 2.2);
-      key.position.set(1.15, 2.15, 1.55);
+      key = new THREE.RectAreaLight(0xffd4a8, 4.0, 1.8, 2.4);
+      key.position.set(1.85, 2.45, 1.25);
       key.lookAt(0, 1.15, 0);
       scene.add(key);
 
-      keySun = new THREE.DirectionalLight(0xffe8d2, 0.55);
-      keySun.position.set(1.6, 2.8, 1.9);
+      keySun = new THREE.DirectionalLight(0xffc089, 1.65);
+      keySun.position.set(2.4, 3.4, 1.35);
       keySun.castShadow = true;
-      keySun.shadow.mapSize.set(1024, 1024);
-      keySun.shadow.camera.near = 0.5;
-      keySun.shadow.camera.far = 12;
-      keySun.shadow.camera.left = -2.5;
-      keySun.shadow.camera.right = 2.5;
-      keySun.shadow.camera.top = 2.5;
-      keySun.shadow.camera.bottom = -2.5;
-      keySun.shadow.bias = -0.00025;
-      keySun.shadow.normalBias = 0.04;
-      keySun.shadow.radius = 4;
+      keySun.shadow.mapSize.set(2048, 2048);
+      keySun.shadow.camera.near = 0.4;
+      keySun.shadow.camera.far = 14;
+      keySun.shadow.camera.left = -1.6;
+      keySun.shadow.camera.right = 1.6;
+      keySun.shadow.camera.top = 1.8;
+      keySun.shadow.camera.bottom = -1.4;
+      keySun.shadow.bias = -0.00018;
+      keySun.shadow.normalBias = 0.028;
+      keySun.shadow.radius = 2.8;
       scene.add(keySun);
-      keySun.target.position.set(0, 1.2, 0);
+      keySun.target.position.set(0, 1.15, 0);
       scene.add(keySun.target);
 
-      fill = new THREE.RectAreaLight(0xdde6f5, 2.0, 2.8, 2.2);
-      fill.position.set(-1.55, 1.35, 1.25);
-      fill.lookAt(0, 1.1, 0);
+      softSun = new THREE.DirectionalLight(0xffe0c0, 0.38);
+      softSun.position.set(1.1, 4.2, 2.2);
+      softSun.castShadow = false;
+      scene.add(softSun);
+      softSun.target.position.set(0, 0.9, 0);
+      scene.add(softSun.target);
+
+      fill = new THREE.RectAreaLight(0x8aa8c4, 0.95, 2.8, 3.4);
+      fill.position.set(-2.25, 1.15, 1.55);
+      fill.lookAt(0, 1.05, 0);
       scene.add(fill);
 
-      rim = new THREE.SpotLight(0xb8d4ff, 1.8, 14, 0.65, 0.65, 1.1);
-      rim.position.set(-0.85, 2.55, -2.1);
-      rim.target.position.set(0, 1.25, 0);
+      rim = new THREE.SpotLight(0xb0d0ff, 3.2, 18, 0.42, 0.42, 1);
+      rim.position.set(-1.45, 3.05, -2.45);
+      rim.target.position.set(0, 1.28, 0);
       rim.castShadow = false;
       scene.add(rim);
       scene.add(rim.target);
 
-      kick = new THREE.SpotLight(0xffc9a0, 1.1, 10, 0.55, 0.7, 1.25);
-      kick.position.set(1.9, 1.7, -0.35);
-      kick.target.position.set(0, 1.2, 0);
+      kick = new THREE.SpotLight(0xff9a62, 1.7, 12, 0.34, 0.48, 1.15);
+      kick.position.set(2.25, 1.95, -1.55);
+      kick.target.position.set(0, 1.18, 0);
       scene.add(kick);
       scene.add(kick.target);
 
-      bounce = new THREE.RectAreaLight(0xffffff, 0.55, 3.2, 1.2);
-      bounce.position.set(0.1, 0.15, 1.1);
+      bounce = new THREE.RectAreaLight(0xffe6c4, 0.35, 2.8, 1.1);
+      bounce.position.set(0.1, 0.08, 1.15);
       bounce.lookAt(0, 1.2, 0);
       scene.add(bounce);
 
-      eyeCatch = new THREE.PointLight(0xfff6ea, 0.22, 3.5, 2);
-      eyeCatch.position.set(0.25, 1.55, 1.85);
+      eyeCatch = new THREE.PointLight(0xfff4e0, 0.48, 2.6, 2);
+      eyeCatch.position.set(0.35, 1.58, 1.6);
       scene.add(eyeCatch);
 
-      warm = new THREE.PointLight(0xffd7b0, 0.28, 5.5, 2);
-      warm.position.set(0.95, 1.6, 1.35);
+      warm = new THREE.PointLight(0xffb070, 0.18, 4.5, 2);
+      warm.position.set(1.4, 1.6, 1.1);
       scene.add(warm);
 
-      cool = new THREE.PointLight(0xc5d9ff, 0.22, 5.5, 2);
-      cool.position.set(-1.05, 1.4, 1.1);
+      cool = new THREE.PointLight(0x7ea6d4, 0.12, 4.8, 2);
+      cool.position.set(-1.5, 1.3, 0.9);
       scene.add(cool);
 
-      cheek = new THREE.SpotLight(0xfff0e0, 0.45, 7, 0.42, 0.75, 1.35);
-      cheek.position.set(0.45, 2.15, 1.85);
-      cheek.target.position.set(0, 1.2, 0);
+      cheek = new THREE.SpotLight(0xffd6b0, 0.7, 7, 0.3, 0.68, 1.3);
+      cheek.position.set(0.9, 2.1, 1.6);
+      cheek.target.position.set(0.12, 1.22, 0);
       scene.add(cheek);
       scene.add(cheek.target);
     }
 
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(lite ? 6 : 10, lite ? 6 : 10),
-      lite
-        ? new THREE.MeshBasicMaterial({ color: STAGE })
-        : new THREE.ShadowMaterial({ opacity: 0.12, color: 0x000000 })
+      new THREE.CircleGeometry(lite ? 7 : 14, 64),
+      new THREE.MeshStandardMaterial({
+        color: STAGE,
+        roughness: 0.88,
+        metalness: 0,
+        envMapIntensity: 0.16,
+      })
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.05;
     ground.receiveShadow = !lite;
     scene.add(ground);
+
+    const wall = new THREE.Mesh(
+      new THREE.PlaneGeometry(lite ? 16 : 24, lite ? 10 : 16),
+      new THREE.MeshStandardMaterial({
+        color: STAGE_DEEP,
+        roughness: 0.94,
+        metalness: 0,
+        envMapIntensity: 0.16,
+      })
+    );
+    wall.position.set(0, 4.2, lite ? -4.2 : -5.4);
+    wall.receiveShadow = !lite;
+    scene.add(wall);
 
     const keyHome = key.position.clone();
     const fillHome = fill.position.clone();
@@ -256,6 +342,7 @@ export function LisaCharacter({
     const rimHome = rim?.position.clone() ?? new THREE.Vector3();
     const kickHome = kick?.position.clone() ?? new THREE.Vector3();
     const keySunHome = keySun.position.clone();
+    const softSunHome = softSun?.position.clone() ?? new THREE.Vector3();
     const lightAim = new THREE.Vector3(0, 1.2, 0);
     const tmpAim = new THREE.Vector3();
 
@@ -265,68 +352,38 @@ export function LisaCharacter({
       if (!(fill instanceof THREE.RectAreaLight)) return;
       if (!rim || !kick || !bounce || !eyeCatch || !warm || !cool || !cheek) return;
 
-      const breath = 0.5 + 0.5 * Math.sin(t * 0.55);
-      const breath2 = 0.5 + 0.5 * Math.sin(t * 0.82 + 1.1);
-      const breath3 = 0.5 + 0.5 * Math.sin(t * 0.4 + 2.4);
+      const breath = 0.5 + 0.5 * Math.sin(t * 0.22);
       const mx = lookNdcSmooth.x;
       const my = lookNdcSmooth.y;
 
-      key.intensity = 3.8 + breath * 0.45 + Math.abs(mx) * 0.2;
-      keySun.intensity = 0.48 + breath * 0.08 + Math.max(0, mx) * 0.06;
-      fill.intensity = 1.7 + breath2 * 0.2;
-      rim.intensity = 1.5 + breath3 * 0.35 + Math.max(0, -mx) * 0.2;
-      kick.intensity = 0.9 + breath * 0.25 + Math.max(0, mx) * 0.15;
-      bounce.intensity = 0.45 + breath2 * 0.1;
-      eyeCatch.intensity = 0.18 + breath * 0.08;
-      warm.intensity = 0.22 + breath2 * 0.12 + Math.max(0, mx) * 0.08;
-      cool.intensity = 0.18 + breath * 0.1 + Math.max(0, -mx) * 0.08;
-      cheek.intensity = 0.38 + breath * 0.12;
+      key.intensity = 3.8 + breath * 0.12;
+      keySun.intensity = 1.55 + breath * 0.05;
+      if (softSun) softSun.intensity = 0.35;
+      fill.intensity = 0.9 + Math.max(0, -mx) * 0.08;
+      rim.intensity = 3.0 + breath * 0.12 + Math.max(0, -mx) * 0.15;
+      kick.intensity = 1.6 + Math.max(0, mx) * 0.12;
+      bounce.intensity = 0.32;
+      eyeCatch.intensity = 0.45 + breath * 0.04;
+      warm.intensity = 0.16;
+      cool.intensity = 0.1;
+      cheek.intensity = 0.65 + breath * 0.04;
 
-      key.position.set(
-        keyHome.x + Math.sin(t * 0.28) * 0.14 + mx * 0.2,
-        keyHome.y + Math.sin(t * 0.45 + 0.4) * 0.07 + my * 0.08,
-        keyHome.z + Math.cos(t * 0.28) * 0.08
-      );
-      keySun.position.set(
-        keySunHome.x + mx * 0.25,
-        keySunHome.y + my * 0.1,
-        keySunHome.z
-      );
-      fill.position.set(
-        fillHome.x + Math.sin(t * 0.24 + 1.5) * 0.12 + mx * 0.1,
-        fillHome.y + Math.cos(t * 0.35) * 0.06 + my * 0.05,
-        fillHome.z + Math.sin(t * 0.3) * 0.07
-      );
-      rim.position.set(
-        rimHome.x + Math.sin(t * 0.22) * 0.12 - mx * 0.15,
-        rimHome.y + Math.cos(t * 0.3) * 0.08,
-        rimHome.z
-      );
-      kick.position.set(
-        kickHome.x + Math.cos(t * 0.26) * 0.1 + mx * 0.18,
-        kickHome.y + Math.sin(t * 0.33) * 0.08,
-        kickHome.z
-      );
-      warm.position.set(
-        warmHome.x + Math.sin(t * 0.5) * 0.2 + mx * 0.28,
-        warmHome.y + Math.sin(t * 0.7 + 0.7) * 0.1,
-        warmHome.z + Math.cos(t * 0.48) * 0.14
-      );
-      cool.position.set(
-        coolHome.x + Math.cos(t * 0.42) * 0.18 + mx * 0.18,
-        coolHome.y + Math.sin(t * 0.55 + 1.1) * 0.09,
-        coolHome.z + Math.sin(t * 0.4) * 0.12
-      );
-      cheek.position.set(
-        cheekHome.x + mx * 0.4 + Math.sin(t * 0.4) * 0.1,
-        cheekHome.y + my * 0.12,
-        cheekHome.z
-      );
-      eyeCatch.position.set(0.2 + mx * 0.15, 1.52 + my * 0.05, 1.85);
+      key.position.set(keyHome.x + mx * 0.08, keyHome.y + my * 0.04, keyHome.z);
+      keySun.position.set(keySunHome.x + mx * 0.1, keySunHome.y, keySunHome.z);
+      if (softSun) {
+        softSun.position.set(softSunHome.x + mx * 0.05, softSunHome.y, softSunHome.z);
+      }
+      fill.position.set(fillHome.x, fillHome.y, fillHome.z);
+      rim.position.set(rimHome.x - mx * 0.06, rimHome.y, rimHome.z);
+      kick.position.set(kickHome.x + mx * 0.06, kickHome.y, kickHome.z);
+      warm.position.copy(warmHome);
+      cool.position.copy(coolHome);
+      cheek.position.set(cheekHome.x + mx * 0.12, cheekHome.y + my * 0.05, cheekHome.z);
+      eyeCatch.position.set(0.32 + mx * 0.08, 1.58 + my * 0.03, 1.55);
 
       tmpAim.copy(lightAim);
-      tmpAim.x += mx * 0.28;
-      tmpAim.y += my * 0.12;
+      tmpAim.x += mx * 0.1;
+      tmpAim.y += my * 0.05;
       key.lookAt(tmpAim);
       fill.lookAt(tmpAim);
       cheek.target.position.copy(tmpAim);
@@ -337,10 +394,13 @@ export function LisaCharacter({
       kick.target.updateMatrixWorld();
       keySun.target.position.copy(tmpAim);
       keySun.target.updateMatrixWorld();
+      if (softSun) {
+        softSun.target.position.set(tmpAim.x, Math.max(0.2, tmpAim.y - 0.35), tmpAim.z);
+        softSun.target.updateMatrixWorld();
+      }
 
-      renderer.toneMappingExposure =
-        1.05 + breath * 0.05 + Math.abs(mx) * 0.02;
-      scene.environmentIntensity = 0.32 + breath2 * 0.08;
+      renderer.toneMappingExposure = 0.96 + breath * 0.015;
+      scene.environmentIntensity = 0.26;
     };
 
     const root = new THREE.Group();
@@ -350,6 +410,15 @@ export function LisaCharacter({
     const clock = new THREE.Clock();
     let raf = 0;
     let disposed = false;
+    let ticking = false;
+    let inView = true;
+    let tick: (now?: number) => void = () => undefined;
+
+    const kickRenderLoop = () => {
+      if (disposed || ticking) return;
+      ticking = true;
+      raf = requestAnimationFrame((t) => tick(t));
+    };
 
     /** -1..1 look target (mouse NDC on desktop, sensor-derived on mobile) */
     const lookNdc = new THREE.Vector2(0, 0);
@@ -368,6 +437,15 @@ export function LisaCharacter({
     let skeleton: THREE.Skeleton | null = null;
     let framed = false;
     let mixer: THREE.AnimationMixer | null = null;
+    let lookBone: THREE.Object3D | null = null;
+    let headBone: THREE.Object3D | null = null;
+    let lockedBones: { bone: THREE.Object3D; bindQuat: THREE.Quaternion }[] = [];
+    const lookBindPos = new THREE.Vector3();
+    const qYaw = new THREE.Quaternion();
+    const qPitch = new THREE.Quaternion();
+    const qOffset = new THREE.Quaternion();
+    const axisY = new THREE.Vector3(0, 1, 0);
+    const axisX = new THREE.Vector3(1, 0, 0);
 
     let targetYaw = 0;
     let targetPitch = 0;
@@ -392,7 +470,7 @@ export function LisaCharacter({
     const resize = () => {
       const w = mount.clientWidth || window.innerWidth;
       const h = mount.clientHeight || window.innerHeight;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 1 : 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 1 : 1.75));
       renderer.setSize(w, h, false);
       camera.aspect = w / Math.max(h, 1);
       camera.updateProjectionMatrix();
@@ -409,8 +487,8 @@ export function LisaCharacter({
       lookMoved = true;
       gazeSettled = false;
       stillFrames = 0;
+      kickRenderLoop();
     };
-
     const onMouseMove = (e: PointerEvent) => {
       if (useDeviceSensors) return;
       if (e.pointerType === "touch") return;
@@ -522,22 +600,24 @@ export function LisaCharacter({
     ro.observe(mount);
 
     const applyGaze = (dt: number) => {
-      if (!joints.length) return;
+      if (!joints.length && !headBone) return;
 
-      if (lookMoved) {
-        // Full viewport, but dialed back a bit from max turn
+        if (lookMoved) {
+        // Match dooogs look range — softer upward pitch so the chin doesn't smoosh
         targetYaw = lookNdcSmooth.x * 0.72;
-        targetPitch = lookNdcSmooth.y * 0.32;
+        const up = lookNdcSmooth.y > 0;
+        targetPitch = lookNdcSmooth.y * (up ? 0.16 : 0.28);
+      }
+
+      for (const locked of lockedBones) {
+        locked.bone.quaternion.copy(locked.bindQuat);
+        locked.bone.updateMatrix();
       }
 
       const damp = lookMoved ? 11 : 13;
       const k = 1 - Math.exp(-dt * damp);
       smoothYaw += (targetYaw - smoothYaw) * k;
       smoothPitch += (targetPitch - smoothPitch) * k;
-
-      const qYaw = new THREE.Quaternion();
-      const qPitch = new THREE.Quaternion();
-      const qOffset = new THREE.Quaternion();
 
       for (const joint of joints) {
         const { bone, bindQuat, weight, maxYaw, maxPitch, yawScale } = joint;
@@ -546,21 +626,30 @@ export function LisaCharacter({
           -maxYaw,
           maxYaw
         );
+        const pitchRaw = smoothPitch * weight;
+        // Less pitch looking up (positive) — protects under-chin from smooshing
         const pitch = THREE.MathUtils.clamp(
-          smoothPitch * weight,
-          -maxPitch,
+          pitchRaw,
+          -maxPitch * 1.35,
           maxPitch
         );
 
-        // Twist around the neck bone (Y) + nod (X). Pivot is the bone head
-        // at the back of the collar — whole head orbits the neck, not the mouth.
-        qYaw.setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-        qPitch.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -pitch);
+        qYaw.setFromAxisAngle(axisY, yaw);
+        qPitch.setFromAxisAngle(axisX, -pitch);
         qOffset.copy(qYaw).multiply(qPitch);
         bone.quaternion.copy(bindQuat).multiply(qOffset);
-        // Keep skin matrices in sync with the new local rotation
         bone.updateMatrix();
         bone.updateMatrixWorld(true);
+      }
+
+      if (lookBone) {
+        lookBone.position.set(
+          lookBindPos.x + lookNdcSmooth.x * LOOK_RANGE_X,
+          lookBindPos.y + lookNdcSmooth.y * LOOK_RANGE_Y,
+          lookBindPos.z
+        );
+        lookBone.updateMatrix();
+        lookBone.updateMatrixWorld(true);
       }
 
       if (skeleton) {
@@ -575,8 +664,14 @@ export function LisaCharacter({
       if (!lookMoved && angErr < 0.002) gazeSettled = true;
     };
 
-    new GLTFLoader().load(
-      withBase(MODEL_PATH),
+    const draco = new DRACOLoader();
+    draco.setDecoderPath(withBase("/draco/"));
+    draco.preload();
+    const loader = new GLTFLoader();
+    loader.setDRACOLoader(draco);
+
+    loader.load(
+      withBase(`${MODEL_BASE}?v=${encodeURIComponent(modelRev)}`),
       (gltf) => {
         if (disposed) return;
         const model = gltf.scene;
@@ -591,41 +686,91 @@ export function LisaCharacter({
           const mats = Array.isArray(mesh.material)
             ? mesh.material
             : [mesh.material];
+          const upgraded: THREE.Material[] = [];
           for (const mat of mats) {
             const std = mat as THREE.MeshStandardMaterial;
-            if (std.map) std.map.colorSpace = THREE.SRGBColorSpace;
-            if ("envMapIntensity" in std) std.envMapIntensity = 0.42;
-            if ("metalness" in std && std.metalness > 0.35) std.metalness = 0.05;
-            if ("roughness" in std && std.roughness > 0.9) std.roughness = 0.68;
-            // Hide open mouth/nose cavity interiors (DoubleSide looked like a face tear).
-            std.side = THREE.FrontSide;
-            std.needsUpdate = true;
+            const phys = new THREE.MeshPhysicalMaterial();
+            phys.name = std.name;
+            phys.map = std.map;
+            phys.normalMap = std.normalMap;
+            phys.normalScale.copy(std.normalScale || new THREE.Vector2(1, 1));
+            phys.roughnessMap = std.roughnessMap;
+            phys.metalnessMap = std.metalnessMap;
+            phys.aoMap = std.aoMap;
+            phys.emissiveMap = std.emissiveMap;
+            phys.color.copy(std.color);
+            phys.emissive.copy(std.emissive);
+            phys.roughness = std.roughnessMap ? 1 : Math.min(std.roughness || 1, 0.62);
+            phys.metalness = std.metalnessMap ? std.metalness : Math.min(std.metalness || 0, 0.08);
+            phys.envMapIntensity = 0.4;
+            phys.clearcoat = 0.12;
+            phys.clearcoatRoughness = 0.48;
+            phys.sheen = 0.18;
+            phys.sheenRoughness = 0.55;
+            phys.sheenColor.setHex(0xffe0c4);
+            phys.side = THREE.DoubleSide;
+            if (std.transparent) {
+              phys.transparent = true;
+              phys.opacity = std.opacity;
+            }
+            if (std.alphaTest > 0) {
+              phys.alphaTest = std.alphaTest;
+            }
+            const maps = [
+              phys.map,
+              phys.normalMap,
+              phys.roughnessMap,
+              phys.metalnessMap,
+              phys.aoMap,
+            ];
+            for (const tex of maps) {
+              if (!tex) continue;
+              tex.anisotropy = lite ? 4 : 16;
+              tex.generateMipmaps = true;
+              tex.minFilter = THREE.LinearMipmapLinearFilter;
+              tex.magFilter = THREE.LinearFilter;
+            }
+            if (phys.map) phys.map.colorSpace = THREE.SRGBColorSpace;
+            phys.needsUpdate = true;
+            std.dispose();
+            upgraded.push(phys);
           }
+          mesh.material = upgraded.length === 1 ? upgraded[0] : upgraded;
         });
 
         root.add(model);
         root.updateMatrixWorld(true);
 
-        // Sit the shadow floor under the paws
         box.setFromObject(model);
         ground.position.y = box.min.y + 0.01;
+        wall.position.y = ground.position.y + 4.2;
 
-        const chest = findBone(model, ["chest"]);
-        const n1 = findBone(model, ["neck_01"]);
+        const chest = findBone(model, ["chest", "Body"]);
+        const rootBone = findBone(model, ["root"]);
+        const n1 = findBone(model, ["neck_01", "Neck_01", "neck"]);
+        const n2 = findBone(model, ["neck_02", "Neck_02"]);
+        headBone = findBone(model, ["head", "Head"]);
+        lookBone = findBone(model, ["Look"]);
+        // Lock torso + head local — bend only neck_01/neck_02; head follows as rigid child.
+        lockedBones = [rootBone, chest, headBone]
+          .filter((bone): bone is THREE.Object3D => Boolean(bone))
+          .map((bone) => {
+            bone.updateWorldMatrix(true, false);
+            return { bone, bindQuat: bone.quaternion.clone() };
+          });
 
-        // Play Blender-authored nose sniff clip (dog-like twitches every few seconds)
         if (gltf.animations?.length) {
           mixer = new THREE.AnimationMixer(model);
-          const sniff =
-            gltf.animations.find((c) => /nose|sniff/i.test(c.name)) ??
+          const idle =
+            gltf.animations.find((c) => /idle|breath/i.test(c.name)) ??
             gltf.animations[0];
-          const action = mixer.clipAction(sniff);
+          const action = mixer.clipAction(idle);
           action.setLoop(THREE.LoopRepeat, Infinity);
           action.play();
         }
 
         const make = (
-          bone: THREE.Bone | null,
+          bone: THREE.Object3D | null,
           weight: number,
           maxYaw: number,
           maxPitch: number,
@@ -643,45 +788,81 @@ export function LisaCharacter({
           };
         };
 
-        // Chest leads a little; neck does most of the look (parent → child).
+        if (lookBone) lookBindPos.copy(lookBone.position);
+
+        // Bendable neck only — head stays locally locked so the face can't tear.
         joints = [
-          make(chest, 0.3, 0.2, 0.07, 1),
-          make(n1, 0.95, 0.55, 0.24, 1),
+          make(n1, 0.55, 0.28, 0.10, 1),
+          make(n2, 0.70, 0.35, 0.12, 1),
         ].filter(Boolean) as LookJoint[];
 
+        // Fallback if neck_02 missing from older GLB
+        if (!n2 && n1) {
+          joints = [make(n1, 0.85, 0.45, 0.14, 1)].filter(Boolean) as LookJoint[];
+        }
+        if (!joints.length && headBone) {
+          joints = [make(headBone, 0.7, 0.4, 0.12, 1)].filter(Boolean) as LookJoint[];
+        }
 
-        const framePortrait = () => {
-          root.updateMatrixWorld(true);
+        if (!joints.length) {
           box.setFromObject(model);
           box.getSize(size);
           box.getCenter(center);
+          const pivot = new THREE.Group();
+          pivot.name = "LookPivot";
+          pivot.position.set(center.x, box.min.y + size.y * 0.72, center.z);
+          root.add(pivot);
+          pivot.attach(model);
+          joints = [make(pivot, 1, 0.42, 0.26, 1)].filter(Boolean) as LookJoint[];
+        }
 
-          const lookY = box.min.y + size.y * 0.59;
-          headWorld.set(center.x, lookY, center.z);
-          const dist = Math.max(2.25, size.y * 1.45);
-          const mobile = (mount.clientWidth || window.innerWidth) < 1024;
-          // Desktop: shift dog right for left-column UI. Mobile: center in stage.
-          const screenShiftX = mobile ? 0 : 0.48;
-          camera.fov = mobile ? 38 : 34;
-          camera.updateProjectionMatrix();
-          camera.position.set(
-            headWorld.x,
-            headWorld.y + (mobile ? 0.04 : 0.025),
-            headWorld.z + dist * (mobile ? 1.05 : 1)
-          );
-          camera.lookAt(
-            headWorld.x - screenShiftX,
-            headWorld.y - (mobile ? 0.04 : 0.025),
-            headWorld.z
-          );
-          lightAim.set(headWorld.x, headWorld.y, headWorld.z);
-          key.lookAt(lightAim);
-          fill.lookAt(lightAim);
-          if (cheek) cheek.target.position.copy(lightAim);
-          framed = true;
+        const framePortrait = () => {
+          try {
+            root.updateMatrixWorld(true);
+            box.setFromObject(model);
+            box.getSize(size);
+            box.getCenter(center);
+
+            if (headBone) {
+              headBone.getWorldPosition(headWorld);
+            } else {
+              headWorld.set(center.x, box.min.y + size.y * 0.78, center.z);
+            }
+            const dist = Math.max(2.15, size.y * 1.2);
+            const mobile = (mount.clientWidth || window.innerWidth) < 1024;
+            const screenShiftX = mobile ? 0.14 : 0.5;
+            camera.fov = mobile ? 38 : 34;
+            camera.updateProjectionMatrix();
+            camera.position.set(
+              headWorld.x,
+              headWorld.y - (mobile ? 0.2 : 0.22),
+              headWorld.z + dist * (mobile ? 1.32 : 1.22)
+            );
+            camera.lookAt(
+              headWorld.x - screenShiftX,
+              headWorld.y - (mobile ? 0.38 : 0.36),
+              headWorld.z
+            );
+            camera.rotateX(-VIEW_LIFT);
+            lightAim.set(headWorld.x, headWorld.y, headWorld.z);
+            key.lookAt(lightAim);
+            fill.lookAt(lightAim);
+            if (cheek) cheek.target.position.copy(lightAim);
+            keySun.target.position.copy(lightAim);
+            keySun.target.updateMatrixWorld();
+            if (softSun) {
+              softSun.target.position.set(lightAim.x, ground.position.y + 0.4, lightAim.z);
+              softSun.target.updateMatrixWorld();
+            }
+            framed = true;
+            renderer.render(scene, camera);
+          } catch (err) {
+            console.warn("framePortrait", err);
+            framed = true;
+          }
         };
         framePortraitFn = framePortrait;
-
+        framePortrait();
         requestAnimationFrame(() => {
           framePortrait();
           requestAnimationFrame(framePortrait);
@@ -692,25 +873,71 @@ export function LisaCharacter({
     );
 
     let lastFrame = 0;
-    const minFrameMs = lite ? 1000 / 28 : 0;
+    // Cap at ~45fps when moving; idle settles to near-zero GPU when settled
+    const minFrameMs = lite ? 1000 / 28 : 1000 / 45;
 
     const onContextLost = (e: Event) => {
       e.preventDefault();
       disposed = true;
       cancelAnimationFrame(raf);
+      ticking = false;
     };
     renderer.domElement.addEventListener("webglcontextlost", onContextLost, false);
 
-    const tick = (now = performance.now()) => {
-      if (disposed) return;
-      raf = requestAnimationFrame(tick);
-      if (document.hidden) return;
-      if (minFrameMs && now - lastFrame < minFrameMs) return;
+    const io =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              inView = entries.some((e) => e.isIntersecting && e.intersectionRatio > 0.05);
+              if (inView) kickRenderLoop();
+            },
+            { threshold: [0, 0.05, 0.2] }
+          )
+        : null;
+    if (io) io.observe(mount);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") kickRenderLoop();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    tick = (now = performance.now()) => {
+      if (disposed) {
+        ticking = false;
+        return;
+      }
+
+      const pageHidden = document.hidden || !inView;
+      if (pageHidden) {
+        ticking = false;
+        return;
+      }
+
+      // Keep the loop alive while settling; pause when fully idle (no clip playing)
+      const settledIdle = gazeSettled && !lookMoved;
+      if (settledIdle && framed && !mixer) {
+        ticking = false;
+        try {
+          renderer.render(scene, camera);
+        } catch {
+          disposed = true;
+        }
+        return;
+      }
+
+      raf = requestAnimationFrame((t) => tick(t));
+
+      // Idle animation (if any): drop to ~12fps. Active look: ~45fps.
+      const budget = settledIdle && mixer ? 1000 / 12 : minFrameMs;
+      if (budget && now - lastFrame < budget) return;
       lastFrame = now;
 
       const dt = Math.min(clock.getDelta(), 0.05);
       const movedDist = lookNdc.distanceTo(prevLook);
-      if (movedDist > STILL_EPS) lookMoved = true;
+      if (movedDist > STILL_EPS) {
+        lookMoved = true;
+        gazeSettled = false;
+      }
       prevLook.copy(lookNdc);
 
       // Sensors: slightly softer follow so gyro noise doesn't jitter the neck
@@ -724,7 +951,7 @@ export function LisaCharacter({
         stillFrames = 0;
       }
 
-      if (framed && mixer) {
+      if (mixer) {
         mixer.update(dt);
         if (skeleton) {
           const rootBone = skeleton.bones[0];
@@ -734,28 +961,36 @@ export function LisaCharacter({
         }
       }
 
-      if (framed && (!gazeSettled || lookMoved)) applyGaze(dt);
+      if (!gazeSettled || lookMoved) applyGaze(dt);
       if (!lookMoved && stillFrames >= STILL_FRAMES_TO_FREEZE) {
         gazeSettled = true;
       }
 
-      applyLiveLights(clock.elapsedTime);
+      // Light breath only while looking — freeze when idle to skip GPU work
+      if (!gazeSettled || lookMoved) {
+        applyLiveLights(clock.elapsedTime);
+        if (!lite) renderer.shadowMap.needsUpdate = true;
+      }
 
       try {
         renderer.render(scene, camera);
       } catch {
         disposed = true;
         cancelAnimationFrame(raf);
+        ticking = false;
       }
     };
-    tick();
+    kickRenderLoop();
 
     return () => {
       disposed = true;
+      ticking = false;
       cancelAnimationFrame(raf);
       enableMotionRef.current = null;
       window.removeEventListener("pointermove", onMouseMove);
       window.removeEventListener("deviceorientation", onDeviceOrient, true);
+      document.removeEventListener("visibilitychange", onVisibility);
+      io?.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onDragDown);
       renderer.domElement.removeEventListener("pointermove", onDragMove);
       renderer.domElement.removeEventListener("pointerup", onDragUp);
@@ -767,15 +1002,19 @@ export function LisaCharacter({
         mount.removeChild(renderer.domElement);
       }
       try {
+        draco.dispose();
         renderer.dispose();
         pmrem?.dispose();
+        backdropTex.dispose();
         ground.geometry.dispose();
         (ground.material as THREE.Material).dispose();
+        wall.geometry.dispose();
+        (wall.material as THREE.Material).dispose();
       } catch {
         /* ignore */
       }
     };
-  }, []);
+  }, [FRAME_REV, modelRev]);
 
   return (
     <>

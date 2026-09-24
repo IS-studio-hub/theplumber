@@ -48,7 +48,7 @@ export function DooogsAskBar({
   placeholder,
 }: {
   locale: Locale;
-  /** True while Dooogs is thinking or speaking — mic pauses, conversation stays on */
+  /** True while Dooogs is thinking or speaking ,  mic pauses, conversation stays on */
   disabled?: boolean;
   conversation: boolean;
   onConversationChange: (v: boolean) => void;
@@ -80,7 +80,7 @@ export function DooogsAskBar({
     valueRef.current = value;
   }, [value]);
 
-  // Parent may close conversation after an answer — stop listening
+  // Parent may close conversation after an answer ,  stop listening
   useEffect(() => {
     if (!conversation) {
       wantListenRef.current = false;
@@ -186,12 +186,12 @@ export function DooogsAskBar({
     if (browserRecRef.current) return;
 
     // LinkedIn / in-app WebViews often expose a broken SpeechRecognition that
-    // ends immediately — avoid restart loops; ask the user to type instead.
+    // ends immediately ,  avoid restart loops; ask the user to type instead.
     if (isInAppBrowser()) {
       notice(
         locale === "fr"
-          ? "Dans LinkedIn, tape ta question — ouvre Safari/Chrome pour la voix."
-          : "In LinkedIn, please type your question — open Safari/Chrome for voice."
+          ? "Dans LinkedIn, tape ta question, ou ouvre Safari/Chrome pour la voix."
+          : "In LinkedIn, please type your question, or open Safari/Chrome for voice."
       );
       endConversation();
       return;
@@ -207,8 +207,8 @@ export function DooogsAskBar({
       notice(
         isIOS
           ? locale === "fr"
-            ? "Sur iPhone, tape ta question — Safari ne gère pas encore la conversation vocale continue."
-            : "On iPhone, please type your question — Safari doesn’t support continuous voice chat yet."
+            ? "Sur iPhone, tape ta question. Safari ne gère pas encore la conversation vocale continue."
+            : "On iPhone, please type your question. Safari doesn’t support continuous voice chat yet."
           : locale === "fr"
             ? "Conversation vocale: utilise Chrome ou Edge."
             : "Voice conversation needs Chrome or Edge."
@@ -274,8 +274,8 @@ export function DooogsAskBar({
       if (err === "network") {
         notice(
           locale === "fr"
-            ? "Réseau micro indisponible — tape ta question."
-            : "Mic network error — please type your question."
+            ? "Réseau micro indisponible. Tape ta question."
+            : "Mic network error. Please type your question."
         );
         endConversation();
       }
@@ -346,7 +346,7 @@ export function DooogsAskBar({
     const text = value.trim();
     if (!text || disabled) return;
     if (conversation) {
-      // Typed while mic mode was on — still a text question (no voice reply)
+      // Typed while mic mode was on ,  still a text question (no voice reply)
       pauseRec();
       setValue("");
       finalsRef.current = "";

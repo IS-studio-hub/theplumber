@@ -5,7 +5,7 @@
     "isCompact": true,
     "dialog": {
       "list": {
-        "ava.intro.1": "Bonjour, comment pouvons-nous vous aider?<br><br>Je suis AVA pour Sewer Squad — plomberie et drains dans le GTA, 24/7."
+        "ava.intro.1": "Bonjour, comment pouvons-nous vous aider?<br><br>Je suis <strong>AVA</strong> pour <strong>Sewer Squad</strong>. Plomberie et drains dans le GTA, 24/7. Urgence, soumission, rendez-vous ou une petite question?"
       }
     },
     "media": []
@@ -14,13 +14,13 @@
     "progress": 0.2,
     "dialog": {
       "list": {
-        "ava.chat.1": "Urgence, soumission, rendez-vous ou question — je suis là."
+        "ava.chat.1": "Bonjour, comment pouvons-nous vous aider?<br><br>Je suis <strong>AVA</strong> pour <strong>Sewer Squad</strong>. Plomberie et drains dans le GTA, 24/7. Urgence, soumission, rendez-vous ou une petite question?"
       }
     },
     "choices": [
       {
         "label": "Urgence",
-        "modelUpdate": { "key": "ask", "value": "C’est une urgence — j’ai besoin d’aide maintenant." }
+        "modelUpdate": { "key": "ask", "value": "C’est une urgence. J’ai besoin d’aide maintenant." }
       },
       {
         "label": "Obtenir un devis",
@@ -42,7 +42,7 @@
     "showErrors": true,
     "dialog": {
       "list": {
-        "ava.form-error.1": "Oups — un petit bug. Réessaie!"
+        "ava.form-error.1": "Oups, un petit bug. Réessaie!"
       }
     },
     "choices": [

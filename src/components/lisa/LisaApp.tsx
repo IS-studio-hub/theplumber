@@ -146,7 +146,7 @@ export function LisaApp({
       voiceStopRef.current?.();
       const ambient = audioRef.current;
       setSpeaking(true);
-      // Scale with reply length — fixed 30s was cutting long answers mid-sentence
+      // Scale with reply length ,  fixed 30s was cutting long answers mid-sentence
       const approx = stripDialogHtml(clean).length;
       const speakWatchdog = window.setTimeout(() => {
         voiceStopRef.current?.();
@@ -246,6 +246,15 @@ export function LisaApp({
         ]);
         setAiSuggestions(turn.suggestions);
         showAssistantReply(turn.reply, { pushPrior: false });
+        if (turn.lead?.booked && turn.lead.confirmationCode) {
+          const code = turn.lead.confirmationCode;
+          const price =
+            turn.lead.quotedPriceCad > 0
+              ? ` · $${turn.lead.quotedPriceCad}`
+              : "";
+          setToast(`Saved to dashboard · ${code}${price}`);
+          window.setTimeout(() => setToast(null), 4200);
+        }
       } catch {
         const offline = offlineAvaReply(text, locale, nextMessages);
         replyHtml = offline.reply;
@@ -268,7 +277,7 @@ export function LisaApp({
           /* ignore */
         }
       }
-      // Don't auto-reopen the mic — user taps to talk again
+      // Don't auto-reopen the mic ,  user taps to talk again
       if (conversationRef.current) {
         setConversation(false);
       }
@@ -277,13 +286,16 @@ export function LisaApp({
   );
 
   const goTo = useCallback(
-    (nextId: string, opts?: { pushHistory?: boolean; modelPatch?: LisaModel }) => {
+    (
+      nextId: string,
+      opts?: { pushHistory?: boolean; modelPatch?: LisaModel; keepDialog?: boolean }
+    ) => {
       const next = content[nextId];
       if (!next) return;
       clearAuto();
       typingLock.current = false;
       setHistory((h) => {
-        if (opts?.pushHistory === false) return h;
+        if (opts?.pushHistory === false || opts?.keepDialog) return h;
         if (!dialogHtml) return h;
         return [...h, { id: stepId, dialogHtml }];
       });
@@ -291,12 +303,17 @@ export function LisaApp({
         setModel((m) => ({ ...m, ...opts.modelPatch }));
       }
       setStepId(nextId);
-      const html = next.dialog?.list ? pickDialog(next.dialog.list) : "";
-      setDialogHtml(sanitizeDialogHtml(html));
-      setTypingDone(false);
-      setExpanded(false);
-      if (nextId === "chat") setDocumentTitle("AVA | Sewer Squad");
-      else setDocumentTitle("AVA | Sewer Squad");
+      if (!opts?.keepDialog) {
+        const html = next.dialog?.list ? pickDialog(next.dialog.list) : "";
+        setDialogHtml(sanitizeDialogHtml(html));
+        setTypingDone(false);
+        setExpanded(false);
+      } else {
+        // Keep the full greeting on screen; only unlock chat choices
+        setTypingDone(true);
+        setExpanded(true);
+      }
+      setDocumentTitle("AVA | Sewer Squad");
     },
     [content, dialogHtml, stepId]
   );
@@ -339,7 +356,7 @@ export function LisaApp({
   }, [muted]);
 
   // Replies speak via playVoice(); unmute speaks from the sound button click.
-  // (Avoid an effect here — it would cancel gesture-started speech on re-render.)
+  // (Avoid an effect here ,  it would cancel gesture-started speech on re-render.)
 
   const onTypingComplete = useCallback(() => {
     if (typingLock.current) return;
@@ -352,10 +369,11 @@ export function LisaApp({
     }
 
     if (step?.next && stepId !== "chat" && !thinking) {
-      const delay = 1200;
+      const delay = 600;
       clearAuto();
       autoTimer.current = window.setTimeout(() => {
-        goTo(step.next!);
+        // Stay on the full greeting — don’t swap in a separate short line
+        goTo(step.next!, { keepDialog: true });
       }, delay);
     }
   }, [step, stepId, thinking, goTo]);
@@ -424,7 +442,7 @@ export function LisaApp({
       return;
     }
     if (step?.next && stepId !== "chat" && !thinking) {
-      goTo(step.next);
+      goTo(step.next, { keepDialog: true });
     }
   }
 
@@ -525,7 +543,7 @@ export function LisaApp({
                   window.setTimeout(() => setToast(null), 3200);
                 }}
                 placeholder={
-                  locale === "fr" ? "Et les chiens ?" : "What about dogs?"
+                  locale === "fr" ? "Demandez-moi n'importe quoi" : "ask me anything"
                 }
               />
             ) : null}
@@ -550,9 +568,13 @@ export function LisaApp({
             ) : null}
 
             <LisaDialog
-              key={`${stepId}-${dialogHtml.slice(0, 40)}-${chatMessages.length}`}
+              key={`dlg-${chatMessages.length}-${dialogHtml.length}-${dialogHtml.slice(0, 48)}`}
               html={dialogHtml}
               showCursor={!typingDone}
+              instant={
+                (stepId === "intro" || stepId === "chat") &&
+                chatMessages.length === 0
+              }
               onComplete={onTypingComplete}
             />
 

@@ -5,7 +5,7 @@
     "isCompact": true,
     "dialog": {
       "list": {
-        "ava.intro.1": "Hi, how can we help?<br><br>I’m AVA for Sewer Squad — plumbing & drains across the GTA, 24/7."
+        "ava.intro.1": "Hi, how can we help?<br><br>I’m <strong>AVA</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
       }
     },
     "media": []
@@ -14,13 +14,13 @@
     "progress": 0.2,
     "dialog": {
       "list": {
-        "ava.chat.1": "Emergency, quote, booking, or a quick question — I’m here."
+        "ava.chat.1": "Hi, how can we help?<br><br>I’m <strong>AVA</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
       }
     },
     "choices": [
       {
         "label": "Emergency help",
-        "modelUpdate": { "key": "ask", "value": "This is an emergency — I need help now." }
+        "modelUpdate": { "key": "ask", "value": "This is an emergency. I need help now." }
       },
       {
         "label": "Get a quote",
@@ -42,7 +42,7 @@
     "showErrors": true,
     "dialog": {
       "list": {
-        "ava.form-error.1": "Oops — something glitched. Try asking again!"
+        "ava.form-error.1": "Oops, something glitched. Try asking again!"
       }
     },
     "choices": [

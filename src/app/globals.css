@@ -3,6 +3,34 @@
 :root {
   --color: #000000;
   --color-bg: #ffffff;
+  --ss-lime: #88d43f;
+  --ss-lime-hover: #79c432;
+  --ss-navy: #1a2c6b;
+  --ss-btn-face: linear-gradient(
+    165deg,
+    #e6ff9c 0%,
+    #b6f05a 16%,
+    #8ed63f 48%,
+    #6fc22c 84%,
+    #54a81a 100%
+  );
+  --ss-btn-face-hover: linear-gradient(
+    165deg,
+    #f0ffb0 0%,
+    #c4f66c 16%,
+    #98de48 48%,
+    #7acc34 84%,
+    #62b624 100%
+  );
+  --ss-btn-depth: inset 0 1.5px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(48, 96, 12, 0.22),
+    inset 0 12px 16px rgba(255, 255, 255, 0.16),
+    inset 0 -10px 14px rgba(48, 100, 10, 0.2),
+    -5px 7px 0 -3px rgba(19, 32, 86, 0.1),
+    -7px 10px 18px rgba(19, 32, 86, 0.26),
+    -2px 3px 6px rgba(19, 32, 86, 0.14);
+  --ss-btn-depth-press: inset 0 3px 8px rgba(48, 100, 10, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25), -2px 3px 8px rgba(19, 32, 86, 0.16);
   --border-size: 1px;
   --border: solid var(--border-size);
   --font-size: 15px;
@@ -153,6 +181,33 @@ html.is-ios body {
 html[data-theme="lisa"] #main-content {
   height: 100%;
   overflow: hidden;
+}
+
+/* Long pages (dashboard, privacy) — restore normal document scroll */
+html.allow-page-scroll {
+  height: auto !important;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip !important;
+  overflow-y: auto !important;
+  overscroll-behavior: auto;
+}
+
+html.allow-page-scroll body {
+  position: relative !important;
+  inset: auto !important;
+  height: auto !important;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  overscroll-behavior: auto;
+}
+
+html.allow-page-scroll #main-content {
+  height: auto !important;
+  min-height: 100%;
+  overflow: visible !important;
 }
 
 html.is-inapp #main-content,
@@ -354,8 +409,8 @@ video {
   inset: 0;
   width: 100%;
   height: 100%;
-  background-color: #000;
-  color: #fff;
+  background-color: #fff;
+  color: #111;
   z-index: 9999;
   transition: opacity 0.9s var(--ease-out);
   display: flex;
@@ -389,7 +444,7 @@ video {
 
 .c-preloader_logo_img {
   display: block;
-  width: min(260px, 70vw);
+  width: min(340px, 78vw);
   height: auto;
 }
 
@@ -450,13 +505,27 @@ video {
   display: inline-flex;
   align-items: center;
   width: auto;
-  max-width: min(7.5rem, 36vw);
+  height: 3.15rem;
+  max-width: min(12rem, 54vw);
 }
 
 .c-header_logo_img {
-  width: 50%;
-  height: auto;
   display: block;
+  width: auto;
+  height: 100%;
+  max-height: 3.15rem;
+  object-fit: contain;
+}
+
+@media (min-width: 1025px) {
+  .c-header_logo_inner {
+    height: 3.4rem;
+    max-width: 14rem;
+  }
+
+  .c-header_logo_img {
+    max-height: 3.4rem;
+  }
 }
 
 .c-header_icon {
@@ -493,14 +562,44 @@ video {
   user-select: none;
 }
 
+.c-header_actions {
+  grid-column: -3 / -1;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.c-header_btn,
+.c-header_cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ss-btn-face);
+  color: #fff;
+  border: 2px solid var(--ss-navy);
+  border-radius: 999px;
+  padding: 0.38em 1em;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  opacity: 1;
+  white-space: nowrap;
+  box-shadow: var(--ss-btn-depth);
+  text-shadow: none;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease, filter 0.22s ease;
+}
+
 @media (max-width: 1024px) {
-  .c-header_cta {
-    display: block;
-    grid-column: 4 / 9;
-    font-size: clamp(0.85rem, 2.6vw, 1.05rem);
+  .c-header_cta,
+  .c-header_btn {
+    display: inline-flex;
+    font-size: 0.58rem;
+    padding: 0.32em 0.7em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 
@@ -589,7 +688,7 @@ html:not(.has-menu-opened) .c-menu {
 .c-lisa_stage {
   position: absolute;
   inset: 0;
-  background: #c9c9c9;
+  background: #8fa06a;
   z-index: 0;
 }
 
@@ -606,18 +705,18 @@ html:not(.has-menu-opened) .c-menu {
   left: 50%;
   transform: translateX(-50%);
   z-index: 900;
-  border: 0;
+  border: 2px solid var(--ss-navy);
   border-radius: 999px;
-  padding: 0.75rem 1.25rem;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: #111;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  padding: 0.7rem 1.4rem;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ss-btn-face);
+  box-shadow: var(--ss-btn-depth);
+  text-shadow: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   pointer-events: auto;
@@ -625,7 +724,8 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-lisa_motion-enable:active {
-  transform: translateX(-50%) scale(0.98);
+  transform: translateX(-50%) translateY(3px);
+  box-shadow: var(--ss-btn-depth-press);
 }
 
 .c-lisa_stage video,
@@ -641,7 +741,7 @@ html:not(.has-menu-opened) .c-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(165deg, #d8d8d8 0%, #c9c9c9 45%, #bdbdbd 100%);
+  background: linear-gradient(165deg, #f3fce6 0%, #e4f6c8 45%, #c5de9a 100%);
 }
 
 .c-lisa_stage-static .c-lisa_stage-mark {
@@ -768,11 +868,14 @@ html:not(.has-menu-opened) .c-menu {
   }
 
   .c-lisa_button.-primary.c-lisa-step_choice {
-    background: #111;
-    color: #fff;
-    border-color: #111;
-    padding: 0.65em 1.15em;
-    font-size: 0.92rem;
+    padding: 0.58em 1.25em;
+    font-size: 0.78rem;
+    box-shadow: none;
+  }
+
+  .c-lisa_button.-primary.c-lisa-step_choice:active {
+    box-shadow: none;
+    transform: none;
   }
 
   .c-dooogs-ask_field {
@@ -786,6 +889,7 @@ html:not(.has-menu-opened) .c-menu {
   .c-dooogs-ask_input {
     font-size: 16px;
     padding: 0.7rem 0.35rem;
+    color: #111;
   }
 
   .c-dooogs-ask_input::placeholder {
@@ -798,19 +902,21 @@ html:not(.has-menu-opened) .c-menu {
   }
 
   .c-dooogs-ask_action.-mic {
-    border: 1.5px solid #111;
-    background: #fff;
-    color: #111;
+    border: 2px solid var(--ss-navy);
+    background: var(--ss-btn-face);
+    color: #fff;
+    box-shadow: var(--ss-btn-depth);
   }
 
   .c-dooogs-ask_action.-send {
-    border: 0;
-    background: #8d8d8d;
+    border: 2px solid var(--ss-navy);
+    background: #b7d98a;
     color: #fff;
   }
 
   .c-dooogs-ask_action.-send:not(:disabled) {
-    background: #111;
+    background: var(--ss-btn-face);
+    box-shadow: var(--ss-btn-depth);
   }
 
   .c-dooogs-ask_action svg {
@@ -839,6 +945,51 @@ html:not(.has-menu-opened) .c-menu {
 
   .c-lisa_sheet-chrome .c-dooogs-ask {
     margin-top: 1.1rem;
+  }
+
+  /* Desktop: white text over the stage */
+  .c-lisa-step_dialog,
+  .c-lisa-step_previous {
+    color: #fff;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .c-lisa-step_dialog.-show-cursor > span:last-child::after {
+    background-color: #fff;
+  }
+
+  .c-dooogs-ask_field {
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(8px);
+  }
+
+  .c-dooogs-ask_field.-listening {
+    border-color: color-mix(in srgb, #fff 50%, #c44);
+  }
+
+  .c-dooogs-ask_input {
+    color: #fff;
+  }
+
+  .c-dooogs-ask_input::placeholder {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .c-lisa-field input,
+  .c-lisa-field textarea {
+    border-bottom-color: rgba(255, 255, 255, 0.65);
+    color: #fff;
+  }
+
+  .c-lisa-field input::placeholder,
+  .c-lisa-field textarea::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .c-lisa-field_file {
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #fff;
   }
 }
 
@@ -877,9 +1028,11 @@ html:not(.has-menu-opened) .c-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color);
-  color: var(--color-bg);
+  background: var(--ss-btn-face);
+  color: #fff;
+  border: 2px solid var(--ss-navy);
   border-radius: 50%;
+  box-shadow: var(--ss-btn-depth);
   z-index: 820;
 }
 
@@ -893,10 +1046,12 @@ html:not(.has-menu-opened) .c-menu {
   position: fixed;
   bottom: var(--grid-margin);
   right: var(--grid-margin);
-  background-color: var(--color);
+  background-color: var(--ss-lime);
+  border: 2px solid var(--ss-navy);
   display: flex;
   flex-direction: column;
   border-radius: 2.6666666667rem;
+  box-shadow: var(--ss-btn-depth);
   cursor: pointer;
   z-index: 820;
   overflow: hidden;
@@ -908,9 +1063,9 @@ html:not(.has-menu-opened) .c-menu {
   position: absolute;
   top: 0;
   left: 0;
-  background-color: var(--color-bg);
+  background-color: var(--ss-navy);
   border-radius: 50%;
-  border: 3px solid var(--color);
+  border: 3px solid var(--ss-navy);
   transform: translate3d(0, 0, 0);
   transition: transform 0.3s var(--ease-out);
   z-index: 1;
@@ -963,19 +1118,19 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-lisa_sound-icon.-on svg {
-  fill: var(--color);
+  fill: #fff;
 }
 
 .c-lisa_sound.-muted .c-lisa_sound-icon.-on svg {
-  fill: var(--color-bg);
+  fill: var(--ss-navy);
 }
 
 .c-lisa_sound-icon.-off svg {
-  fill: var(--color-bg);
+  fill: var(--ss-navy);
 }
 
 .c-lisa_sound.-muted .c-lisa_sound-icon.-off svg {
-  fill: var(--color);
+  fill: #fff;
 }
 
 /* Mobile: keep back + sound floating just above the bottom sheet */
@@ -1010,7 +1165,7 @@ html:not(.has-menu-opened) .c-menu {
 
 @media (min-width: 1025px) {
   .c-lisa-step {
-    padding-top: 50vh;
+    padding-top: 10vh;
     padding-right: var(--grid-gutter);
     --dialog-font-size: var(--font-size-h2);
   }
@@ -1026,9 +1181,13 @@ html:not(.has-menu-opened) .c-menu {
   line-height: 1.1;
   transform-origin: top left;
   letter-spacing: -0.02em;
+  color: #111;
+  text-shadow: none;
 }
 
 .c-lisa-step_dialog {
+  position: relative;
+  z-index: 2;
   transition: transform 0.3s var(--ease-out);
 }
 
@@ -1060,12 +1219,8 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-lisa-step_previous {
-  position: absolute;
-  transform: translate3d(0, calc(-100% - 2.6666666667rem), 0) scale(0.8);
-  filter: blur(4px);
-  cursor: pointer;
-  user-select: none;
-  opacity: 0.9;
+  /* Hide previous-message blur/shadow on every screen */
+  display: none;
 }
 
 .c-lisa-step_content {
@@ -1149,7 +1304,7 @@ html:not(.has-menu-opened) .c-menu {
   background: transparent;
   font-size: 16px;
   padding: 0.55rem 0.25rem;
-  color: var(--color);
+  color: #111;
   outline: none;
 }
 
@@ -1169,17 +1324,19 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-dooogs-ask_action.-mic {
-  border: 1px solid var(--color);
-  background: var(--color-bg);
-  color: var(--color);
+  border: 2px solid var(--ss-navy);
+  background: var(--ss-btn-face);
+  color: #fff;
+  box-shadow: var(--ss-btn-depth);
 }
 
 .c-dooogs-ask_action.-send {
-  border: 1px solid var(--color);
-  background: var(--color);
-  color: var(--color-bg);
+  border: 2px solid var(--ss-navy);
+  background: var(--ss-btn-face);
+  color: #fff;
   font-size: 1.1rem;
   line-height: 1;
+  box-shadow: var(--ss-btn-depth);
 }
 
 .c-dooogs-ask_action svg {
@@ -1188,15 +1345,15 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-dooogs-ask_action.-mic.-on {
-  background: var(--color);
-  color: var(--color-bg);
+  background: var(--ss-navy);
+  color: #fff;
   animation: dooogs-mic-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes dooogs-mic-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color) 35%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ss-navy) 35%, transparent);
   }
   50% {
     box-shadow: 0 0 0 10px transparent;
@@ -1221,20 +1378,30 @@ html:not(.has-menu-opened) .c-menu {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 1em;
-  font-size: 0.8rem;
+  justify-content: center;
+  gap: 0.6em;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   border-radius: 999px;
-  background-color: var(--color-bg);
-  padding: 0.5em 1.5em;
-  overflow: hidden;
-  border: 1px solid var(--color);
+  background: var(--ss-btn-face);
+  color: #fff;
+  padding: 0.62em 1.45em;
+  border: 2px solid var(--ss-navy);
   margin: 0 0.2em 0.4em 0;
+  box-shadow: var(--ss-btn-depth);
+  text-shadow: none;
+  isolation: isolate;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease, filter 0.22s ease;
 }
 
 .c-lisa_button.-primary {
-  background-color: var(--color);
-  color: var(--color-bg);
-  border-color: var(--color);
+  background: var(--ss-btn-face);
+  color: #fff;
+  border-color: var(--ss-navy);
 }
 
 .c-lisa_button.-circle {
@@ -1253,13 +1420,62 @@ html:not(.has-menu-opened) .c-menu {
   pointer-events: none;
 }
 
+.c-lisa_button::after,
+.c-header_btn::after,
+.c-cookie_btn::after,
+.c-inapp_btn::after,
+.c-lisa_motion-enable::after,
+.ava-dash_back::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 2px;
+  height: 46%;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.08) 72%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.c-header_btn,
+.c-cookie_btn,
+.c-inapp_btn,
+.ava-dash_back {
+  position: relative;
+  isolation: isolate;
+}
+
 @media (hover: hover) {
-  .c-lisa_button.-primary:hover::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: rgba(255, 255, 255, 0.12);
+  .c-lisa_button.-primary:hover,
+  .c-cookie_btn:hover,
+  .c-inapp_btn:hover,
+  .c-header_btn:hover,
+  .ava-dash_back:hover,
+  .c-lisa_back:hover,
+  .c-dooogs-ask_action.-send:not(:disabled):hover,
+  .c-dooogs-ask_action.-mic:hover {
+    background: var(--ss-btn-face-hover);
+    transform: translateY(-1px);
+    filter: saturate(1.06);
   }
+}
+
+.c-lisa_button:active,
+.c-cookie_btn:active,
+.c-inapp_btn:active,
+.c-header_btn:active,
+.ava-dash_back:active,
+.c-lisa_back:active,
+.c-dooogs-ask_action:active {
+  transform: translateY(2px);
+  box-shadow: var(--ss-btn-depth-press);
+  filter: saturate(0.96);
 }
 
 .c-lisa-step_fields {
@@ -1278,6 +1494,8 @@ html:not(.has-menu-opened) .c-menu {
   border-bottom: var(--border-size) solid var(--color);
   padding: 0.6em 0;
   font-size: 16px;
+  color: #111;
+  background: transparent;
 }
 
 .c-lisa-field textarea {
@@ -1300,6 +1518,7 @@ html:not(.has-menu-opened) .c-menu {
   font-size: 0.85rem;
   cursor: pointer;
   width: fit-content;
+  color: #111;
 }
 
 .c-lisa-field_file input {
@@ -1368,19 +1587,24 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-cookie_btn {
-  border-radius: 0.4rem;
-  padding: 0.55em 0.9em;
-  font-size: 0.85rem;
-}
-
-.c-cookie_btn.-primary {
-  background: #30363c;
+  border-radius: 999px;
+  padding: 0.58em 1.25em;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid var(--ss-navy);
+  background: var(--ss-btn-face);
   color: #fff;
+  box-shadow: var(--ss-btn-depth);
+  text-shadow: none;
 }
 
+.c-cookie_btn.-primary,
 .c-cookie_btn.-secondary {
-  background: #eaeff2;
-  color: #2c2f31;
+  background: var(--ss-btn-face);
+  color: #fff;
 }
 
 .c-cookie_link {
@@ -1429,30 +1653,27 @@ html:not(.has-menu-opened) .c-menu {
 }
 
 .c-inapp_btn {
-  border: 0;
-  border-radius: 0.4rem;
-  padding: 0.5em 0.85em;
-  font-size: 0.82rem;
+  border: 2px solid var(--ss-navy);
+  border-radius: 999px;
+  padding: 0.5em 1.1em;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   cursor: pointer;
   text-decoration: none;
-  color: inherit;
-  font: inherit;
+  background: var(--ss-btn-face);
+  color: #fff;
+  box-shadow: var(--ss-btn-depth);
 }
 
-.c-inapp_btn.-primary {
-  background: #f4f4f2;
-  color: #2c2f31;
-}
-
-.c-inapp_btn.-secondary {
-  background: rgba(255, 255, 255, 0.14);
-  color: #f4f4f2;
-}
-
+.c-inapp_btn.-primary,
+.c-inapp_btn.-secondary,
 .c-inapp_btn.-ghost {
-  background: transparent;
-  color: rgba(244, 244, 242, 0.75);
-  text-decoration: underline;
+  background: var(--ss-btn-face);
+  color: #fff;
+  text-decoration: none;
 }
 
 /* Privacy */

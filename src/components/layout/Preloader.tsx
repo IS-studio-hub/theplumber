@@ -17,7 +17,10 @@ export function Preloader() {
     } catch {
       /* ignore */
     }
-    const delay = inApp ? 180 : quick ? 400 : 1200;
+    // Dashboard / privacy don't need the long branded splash
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const lightPage = /\/dashboard|\/privacy/.test(path);
+    const delay = inApp ? 120 : lightPage ? 180 : quick ? 350 : 900;
 
     const t = window.setTimeout(() => {
       setDone(true);
@@ -32,7 +35,7 @@ export function Preloader() {
 
     const hide = window.setTimeout(
       () => setHidden(true),
-      delay + (inApp ? 200 : 900)
+      delay + (inApp || lightPage ? 120 : 700)
     );
 
     return () => {
@@ -49,7 +52,7 @@ export function Preloader() {
       aria-hidden="true"
       id="preloader"
     >
-      <AvaLogo className="c-preloader_logo c-preloader_logo_img" invert title="AVA" />
+      <AvaLogo className="c-preloader_logo c-preloader_logo_img" title="Sewer Squad" />
     </div>
   );
 }

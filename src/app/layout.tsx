@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "AVA | Sewer Squad",
   description:
-    "AVA helps Sewer Squad customers with emergencies, quotes, and bookings — plumbing & drains across the GTA, 24/7.",
+    "AVA helps Sewer Squad customers with emergencies, quotes, and bookings for plumbing and drains across the GTA, 24/7.",
   applicationName: "AVA",
   referrer: "strict-origin-when-cross-origin",
   formatDetection: {
@@ -38,22 +38,26 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AVA | Sewer Squad",
     description:
-      "Chat with AVA for Sewer Squad — emergencies, quotes, bookings across the GTA.",
-    siteName: "AVA — Sewer Squad",
+      "Chat with AVA for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
+    siteName: "AVA | Sewer Squad",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "AVA | Sewer Squad",
     description:
-      "Chat with AVA for Sewer Squad — emergencies, quotes, bookings across the GTA.",
+      "Chat with AVA for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
   },
   icons: {
     icon: [
-      { url: "/assets/images/favicons/favicon-32x32.png", sizes: "32x32" },
-      { url: "/assets/images/favicons/favicon-16x16.png", sizes: "16x16" },
+      { url: "/assets/images/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/assets/images/favicons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/assets/images/favicons/favicon.jpg", sizes: "48x48", type: "image/jpeg" },
     ],
-    apple: "/assets/images/favicons/apple-touch-icon.png",
+    shortcut: "/assets/images/favicons/favicon-32x32.png",
+    apple: [
+      { url: "/assets/images/favicons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   other: {
     "X-Content-Type-Options": "nosniff",

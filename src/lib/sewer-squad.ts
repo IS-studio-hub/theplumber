@@ -10,9 +10,9 @@ export const SEWER_SQUAD = {
   phoneTel: "+16476992212",
   email: "info@sewersquad.ca",
   website: "https://www.sewersquad.ca/",
-  hours: "Open 24 hours, 7 days a week — including weekends. No after-hours fees.",
+  hours: "Open 24 hours, 7 days a week, including weekends. No after-hours fees.",
   rating: "4.9★ on Google from 1,000+ GTA homeowners",
-  founded: "2017 by Phil — nearly 15 years in the trade before starting the company",
+  founded: "Started in 2017 by Phil, after nearly 15 years in the trade",
   addresses: [
     {
       label: "Ajax HQ",
@@ -53,13 +53,13 @@ export const SEWER_SQUAD = {
     {
       id: "emergency",
       name: "Emergency Plumbing",
-      blurb: "Licensed help when plumbing problems can’t wait — burst pipes, flooding, sewage backups.",
+      blurb: "Licensed help when plumbing problems can’t wait: burst pipes, flooding, sewage backups.",
       avgJobCad: 450,
     },
     {
       id: "drain",
       name: "Drain Cleaning",
-      blurb: "Clogs cleared. Water flowing — sinks, tubs, main lines.",
+      blurb: "Clogs cleared and water flowing again in sinks, tubs, and main lines.",
       avgJobCad: 280,
     },
     {
@@ -67,7 +67,7 @@ export const SEWER_SQUAD = {
       name: "Sewer Line Clear + Camera",
       blurb: "Main sewer line clear plus camera inspection.",
       priceCad: 88,
-      priceNote: "$88 + HST — everyday price for one main line clear + camera. Residential; conditions apply.",
+      priceNote: "$88 + HST. Everyday price for one main line clear + camera. Residential; conditions apply.",
       avgJobCad: 320,
     },
     {
@@ -79,13 +79,13 @@ export const SEWER_SQUAD = {
     {
       id: "leak",
       name: "Leak Detection & Repair",
-      blurb: "Find hidden leaks before they cause serious damage — no guessing games.",
+      blurb: "Find hidden leaks before they cause serious damage. No guessing games.",
       avgJobCad: 380,
     },
     {
       id: "toilet",
       name: "Toilet Repair",
-      blurb: "Running, rocking, clogged — common toilet problems fixed fast.",
+      blurb: "Running, rocking, or clogged. Common toilet problems fixed fast.",
       avgJobCad: 220,
     },
     {
@@ -105,13 +105,13 @@ export const SEWER_SQUAD = {
     {
       id: "camera",
       name: "Sewer Camera Inspection",
-      blurb: "Waterproof camera to spot cracks, roots, clogs — no unnecessary digging.",
+      blurb: "Waterproof camera to spot cracks, roots, and clogs without unnecessary digging.",
       avgJobCad: 250,
     },
     {
       id: "commercial",
       name: "Commercial Plumbing",
-      blurb: "Offices, restaurants, warehouses, multi-residential — fast response 24/7.",
+      blurb: "Offices, restaurants, warehouses, multi-residential. Fast response 24/7.",
       avgJobCad: 750,
     },
   ],
@@ -137,18 +137,18 @@ export const SEWER_SQUAD = {
     },
   ],
   promises: [
-    "Upfront pricing — you’ll know the cost before work begins",
+    "Upfront pricing. You’ll know the cost before work begins",
     "No after-hours / overtime fees",
     "Same-day service across the GTA when available",
-    "Real humans answer the phone — not a call centre",
-    "Booties on, clean-up after — treat your home like ours",
+    "Real humans answer the phone, not a call centre",
+    "Booties on, clean-up after. We treat your home like ours",
     "Text with tech name, photo, and arrival window",
     "Payment plans available",
   ],
   faqs: [
     {
       q: "Do you offer upfront pricing?",
-      a: "Yes. We explain the issue and cost clearly before we begin — no surprise bills.",
+      a: "Yes. We explain the issue and cost clearly before we begin. No surprise bills.",
     },
     {
       q: "Are there after-hours fees?",
@@ -164,11 +164,11 @@ export const SEWER_SQUAD = {
     },
     {
       q: "Do you handle older plumbing / lead lines?",
-      a: "Yes — cast iron, clay, PVC, PEX, and Toronto lead service lines. For lead, the City may cover part of replacement; we walk you through it.",
+      a: "Yes. Cast iron, clay, PVC, PEX, and Toronto lead service lines. For lead, the City may cover part of replacement, and we walk you through it.",
     },
     {
       q: "Can tree roots block drains?",
-      a: "Yes — especially in older neighbourhoods. We use drain cameras to find roots and damage fast.",
+      a: "Yes, especially in older neighbourhoods. We use drain cameras to find roots and damage fast.",
     },
     {
       q: "What needs urgent attention?",
@@ -176,7 +176,7 @@ export const SEWER_SQUAD = {
     },
     {
       q: "Commercial properties?",
-      a: "Yes — restaurants, offices, warehouses, gyms, multi-residential. 24/7 emergency commercial plumbing.",
+      a: "Yes. Restaurants, offices, warehouses, gyms, multi-residential. 24/7 emergency commercial plumbing.",
     },
   ],
 } as const;
@@ -195,7 +195,7 @@ export function knowledgeContextBlock(): string {
     `Services: ${s.services
       .map((x) => {
         const note = "priceNote" in x && x.priceNote ? ` (${x.priceNote})` : "";
-        return `${x.name} — ${x.blurb}${note}`;
+        return `${x.name}: ${x.blurb}${note}`;
       })
       .join("; ")}`,
     `Offers: ${s.offers.map((o) => `${o.title}: ${o.detail}`).join(" | ")}`,

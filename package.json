@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev -H 127.0.0.1 -p 3000",
+    "dev:turbo": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:pages": "GITHUB_PAGES=true next build"
+    "build:pages": "GITHUB_PAGES=true next build",
+    "blender:character": "/Applications/Blender.app/Contents/MacOS/Blender \"/Users/shamrikin/Desktop/ISstudio/Work/CuttingEdgeSites/the plumber/friendly_mechanic_rig.blend\" --python scripts/ava_blender_autosync.py"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
