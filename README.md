@@ -1,12 +1,12 @@
-# AVA — Sewer Squad
+# Robby — Sewer Squad
 
-Customer-facing AVA chatbot + owner dashboard for [Sewer Squad](https://www.sewersquad.ca/).
+Customer-facing Robby chatbot + owner dashboard for [Sewer Squad](https://www.sewersquad.ca/).
 
 Same look & interaction pattern as the Ginny / Dooogs site, rebuilt for plumbing lead capture.
 
 ## Version 1 flow
 
-1. Customer opens the site → AVA: “Hi, how can we help?”
+1. Customer opens the site → Robby: “Hi, how can we help?”
 2. Knows services, pricing ($88 clear + camera, etc.), hours (24/7), GTA areas, FAQs
 3. Detects intent: emergency / quote / booking / question
 4. Collects name + phone or email
@@ -28,7 +28,7 @@ npm run dev
 
 ## Assets
 
-- 3D AVA model: `public/assets/ava/character/ava.glb` (from Meshy Confident Grace)
+- 3D Robby model: `public/assets/ava/character/ava.glb` (from Meshy Confident Grace)
 
 ## Business facts
 

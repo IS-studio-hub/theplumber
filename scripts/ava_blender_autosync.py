@@ -1,5 +1,5 @@
 """
-AVA → site autosync for Blender.
+Robby → site autosync for Blender.
 
 On every save of the mechanic blend (or any scene with MechanicRig):
   • Export Draco GLB → website/public/assets/ava/character/ava.glb
@@ -34,7 +34,7 @@ _exporting = False
 
 # Slim startup module — only registers handlers (no open/export on launch).
 _STARTUP_SRC = r'''
-"""AVA site autosync — Blender startup (save → export GLB)."""
+"""Robby site autosync — Blender startup (save → export GLB)."""
 from __future__ import annotations
 
 import json
@@ -117,7 +117,7 @@ def export_to_site(reason: str = "manual") -> str:
             }) + "\n",
             encoding="utf-8",
         )
-        msg = f"AVA synced → site (v={stamp})"
+        msg = f"Robby synced → site (v={stamp})"
         print(msg)
         return msg
     finally:
@@ -131,7 +131,7 @@ def on_save_post(_dummy):
     try:
         export_to_site("save")
     except Exception as e:
-        print("AVA autosync failed:", e)
+        print("Robby autosync failed:", e)
 
 
 @persistent
@@ -145,7 +145,7 @@ def register():
         bpy.app.handlers.save_post.append(on_save_post)
     if on_load_post not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(on_load_post)
-    print("AVA autosync armed →", SITE_GLB)
+    print("Robby autosync armed →", SITE_GLB)
 
 
 def unregister():
@@ -221,7 +221,7 @@ def export_to_site(reason: str = "manual") -> str:
             + "\n",
             encoding="utf-8",
         )
-        msg = f"AVA synced → site (v={stamp}, {reason})"
+        msg = f"Robby synced → site (v={stamp}, {reason})"
         print(msg)
         return msg
     finally:
@@ -237,7 +237,7 @@ def on_save_post(_dummy):
     try:
         export_to_site("save")
     except Exception as e:
-        print("AVA autosync failed:", e)
+        print("Robby autosync failed:", e)
 
 
 def install_startup() -> None:
@@ -249,7 +249,7 @@ def install_startup() -> None:
 def register():
     if on_save_post not in bpy.app.handlers.save_post:
         bpy.app.handlers.save_post.append(on_save_post)
-    print("AVA autosync: save_post armed →", SITE_GLB)
+    print("Robby autosync: save_post armed →", SITE_GLB)
 
 
 if __name__ == "__main__":

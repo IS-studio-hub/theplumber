@@ -415,14 +415,14 @@ export default function AvaDashboardPage() {
           <h1 className="ava-dash_title">
             <span
               className={`ava-dash_live${livePulse ? " -pulse" : ""}`}
-              title={fr ? "Synchronisé avec le chat" : "Synced with AVA chat"}
+              title={fr ? "Synchronisé avec le chat" : "Synced with Robby chat"}
             />
-            {fr ? "Tableau de bord AVA" : "AVA Dashboard"}
+            {fr ? "Tableau de bord Robby" : "Robby Dashboard"}
           </h1>
           <p className="ava-dash_sub">
             {fr
-              ? `Rendez-vous, contacts, prix et leads synchronisés depuis le chat AVA pour ${SEWER_SQUAD.name}.`
-              : `Appointments, contacts, pricing, and leads synced live from the AVA chat for ${SEWER_SQUAD.name}.`}
+              ? `Rendez-vous, contacts, prix et leads synchronisés depuis le chat Robby pour ${SEWER_SQUAD.name}.`
+              : `Appointments, contacts, pricing, and leads synced live from the Robby chat for ${SEWER_SQUAD.name}.`}
           </p>
         </div>
         <div className="ava-dash_actions">
@@ -439,7 +439,7 @@ export default function AvaDashboardPage() {
             {fr ? "Retirer démos" : "Clear demos"}
           </button>
           <Link className="ava-dash_back" href={`/${locale}`}>
-            {fr ? "← Chat AVA" : "← AVA chat"}
+            {fr ? "← Chat Robby" : "← Robby chat"}
           </Link>
         </div>
       </div>
@@ -450,8 +450,8 @@ export default function AvaDashboardPage() {
           <strong>{money(stats.estimatedRevenueCad)}</strong>
           <p>
             {fr
-              ? `AVA a généré ${stats.leads} leads → ${stats.bookings} réservations → ${money(stats.estimatedRevenueCad)} de pipeline.`
-              : `AVA generated ${stats.leads} leads → ${stats.bookings} bookings → ${money(stats.estimatedRevenueCad)} estimated pipeline.`}
+              ? `Robby a généré ${stats.leads} leads → ${stats.bookings} réservations → ${money(stats.estimatedRevenueCad)} de pipeline.`
+              : `Robby generated ${stats.leads} leads → ${stats.bookings} bookings → ${money(stats.estimatedRevenueCad)} estimated pipeline.`}
           </p>
           <div className="ava-dash_quoted">
             {fr ? "Prix cités (réservations)" : "Quoted on bookings"}:{" "}
@@ -471,13 +471,13 @@ export default function AvaDashboardPage() {
       <div className="ava-dash_story">
         {fr ? (
           <>
-            Chaque conversation AVA enregistre automatiquement le <strong>contact</strong>, le{" "}
+            Chaque conversation Robby enregistre automatiquement le <strong>contact</strong>, le{" "}
             <strong>service</strong>, le <strong>prix</strong>, le <strong>créneau</strong> et le
             code de confirmation. Ouvrez une ligne pour voir le dossier complet.
           </>
         ) : (
           <>
-            Every AVA conversation automatically saves <strong>contact info</strong>,{" "}
+            Every Robby conversation automatically saves <strong>contact info</strong>,{" "}
             <strong>service</strong>, <strong>price</strong>, <strong>appointment window</strong>, and
             confirmation code. Open a row for the full appointment file.
           </>
@@ -516,8 +516,8 @@ export default function AvaDashboardPage() {
                   <td colSpan={6}>
                     <div className="ava-dash_empty">
                       {fr
-                        ? "Rien ici pour le moment. Ouvrez le chat AVA et réservez un rendez-vous."
-                        : "Nothing here yet. Open AVA chat and book an appointment."}
+                        ? "Rien ici pour le moment. Ouvrez le chat Robby et réservez un rendez-vous."
+                        : "Nothing here yet. Open Robby chat and book an appointment."}
                     </div>
                   </td>
                 </tr>
@@ -661,7 +661,7 @@ export default function AvaDashboardPage() {
                   {selected.messages.slice(-8).map((m, i) => (
                     <p key={`${m.at}-${i}`}>
                       <span className="role">
-                        {m.role === "user" ? (fr ? "Client" : "Customer") : "AVA"}
+                        {m.role === "user" ? (fr ? "Client" : "Customer") : "Robby"}
                       </span>
                       <br />
                       {m.content.slice(0, 220)}

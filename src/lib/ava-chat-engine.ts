@@ -1,5 +1,5 @@
 /**
- * AVA chat engine for Sewer Squad.
+ * Robby chat engine for Sewer Squad.
  * Human-like multi-turn booking: harvest every field from each message,
  * acknowledge what’s known, ask only for gaps, confirm price + appointment,
  * then sync the full lead to the shared dashboard store.
@@ -563,7 +563,7 @@ function confirmationHtml(lead: AvaLead): string {
     `When: <strong>${when}</strong>${dateBit}`,
     priceLine(lead),
     ``,
-    `Reply <strong>yes</strong> to lock it in (it’ll show on the AVA dashboard), or tell me what to change.`,
+    `Reply <strong>yes</strong> to lock it in (it’ll show on the Robby dashboard), or tell me what to change.`,
   ].join("<br>");
 }
 
@@ -642,7 +642,7 @@ async function maybeLlmFaq(
   const timer = setTimeout(() => ctrl.abort(), 12_000);
   try {
     const known = formatLeadSummary(lead);
-    const system = `You are AVA, a warm, sharp front-desk assistant for Sewer Squad (GTA plumbing & drains).
+    const system = `You are Robby, a warm, sharp front-desk assistant for Sewer Squad (GTA plumbing & drains).
 Speak naturally like a helpful human dispatcher. Short, clear, never robotic or salesy.
 Answer in short HTML using <br> for line breaks. No markdown fences. Never use em dashes. Prefer commas, periods, or short sentences.
 Use ONLY this business knowledge:\n${knowledgeContextBlock()}
@@ -968,7 +968,7 @@ export async function runAvaChatTurn(
         lead.appointmentDate = new Date().toISOString().slice(0, 10);
       }
       refreshPricing(lead);
-      lead.notes.push(`Booked via AVA chat at ${new Date().toISOString()}`);
+      lead.notes.push(`Booked via Robby chat at ${new Date().toISOString()}`);
       session.stage = "done";
       session.askFor = null;
       const reply = bookedHtml(lead);
@@ -1149,7 +1149,7 @@ export function offlineAvaReply(
   const quick = kbAnswer(text);
   const reply =
     quick ||
-    `Hi, I’m AVA with Sewer Squad. Tell me if this is an emergency, quote, booking, or question. Or call <strong>${SEWER_SQUAD.phone}</strong> 24/7.`;
+    `Hi, I’m Robby with Sewer Squad. Tell me if this is an emergency, quote, booking, or question. Or call <strong>${SEWER_SQUAD.phone}</strong> 24/7.`;
   appendMsg(session.lead, "user", text);
   appendMsg(session.lead, "assistant", reply);
   saveSession(session);
@@ -1162,5 +1162,5 @@ export function offlineAvaReply(
 }
 
 export function avaGreetingHtml(): string {
-  return `Hi, how can we help?<br><br>I’m <strong>AVA</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?`;
+  return `Hi, how can we help?<br><br>I’m <strong>Robby</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?`;
 }

@@ -1,5 +1,5 @@
 /**
- * AVA lead + appointment store (browser localStorage for static site).
+ * Robby lead + appointment store (browser localStorage for static site).
  * Chat and dashboard share this store; CustomEvent keeps tabs in sync.
  */
 

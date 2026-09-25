@@ -49,7 +49,7 @@ export function LisaApp({
   mutedRef.current = muted;
   const [model, setModel] = useState<LisaModel>({});
   const [toast, setToast] = useState<string | null>(null);
-  const [documentTitle, setDocumentTitle] = useState("AVA | Sewer Squad");
+  const [documentTitle, setDocumentTitle] = useState("Robby | Sewer Squad");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<string[] | null>(null);
   const [thinking, setThinking] = useState(false);
@@ -128,10 +128,12 @@ export function LisaApp({
         ]);
       }
       setStepId("chat");
-      setDialogHtml(sanitizeDialogHtml(html));
+      const clean = sanitizeDialogHtml(html);
+      dialogHtmlRef.current = clean;
+      setDialogHtml(clean);
       setTypingDone(false);
       setExpanded(false);
-      setDocumentTitle("AVA | Sewer Squad");
+      setDocumentTitle("Robby | Sewer Squad");
     },
     []
   );
@@ -191,20 +193,13 @@ export function LisaApp({
 
       const fromMic = Boolean(opts?.fromMic);
 
-      // Voice in → voice out. Text in → text only (keep sound off).
+      // Mic turns sound on. Typed questions keep whatever the user chose.
       if (fromMic) {
         unlockDooogsAudio();
         mutedRef.current = false;
         setMuted(false);
       } else {
         stopVoice();
-        mutedRef.current = true;
-        setMuted(true);
-        const ambient = audioRef.current;
-        if (ambient) {
-          ambient.pause();
-          ambient.volume = 0;
-        }
       }
 
       askingRef.current = true;
@@ -270,7 +265,7 @@ export function LisaApp({
         askingRef.current = false;
       }
 
-      if (replyHtml && fromMic) {
+      if (replyHtml && !mutedRef.current) {
         try {
           await playVoice(replyHtml, { force: true });
         } catch {
@@ -313,13 +308,13 @@ export function LisaApp({
         setTypingDone(true);
         setExpanded(true);
       }
-      setDocumentTitle("AVA | Sewer Squad");
+      setDocumentTitle("Robby | Sewer Squad");
     },
     [content, dialogHtml, stepId]
   );
 
   useEffect(() => {
-    // Start a fresh AVA lead session when the site opens
+    // Start a fresh Robby lead session when the site opens
     if (!loadSession()) {
       const s = freshSession();
       saveSession(s);
@@ -632,21 +627,22 @@ export function LisaApp({
       <button
         type="button"
         className={clsx("c-lisa_sound", muted && "-muted")}
-        aria-label={locale === "fr" ? "Son / voix d’AVA" : "Sound / AVA voice"}
+        aria-label={locale === "fr" ? "Son / voix de Robby" : "Sound / Robby voice"}
         aria-pressed={!muted}
         onClick={() => {
           unlockDooogsAudio();
-          setMuted((m) => {
-            const next = !m;
-            mutedRef.current = next;
-            // Speak current reply inside the click gesture (no setTimeout)
-            if (m && dialogHtmlRef.current && dialogHtmlRef.current !== "…") {
-              playVoice(dialogHtmlRef.current, { force: true });
-            } else if (!m) {
-              stopVoice();
-            }
-            return next;
-          });
+          const turnOn = mutedRef.current;
+          const next = !turnOn;
+          mutedRef.current = next;
+          setMuted(next);
+          if (!turnOn) {
+            stopVoice();
+            return;
+          }
+          const current = dialogHtml || dialogHtmlRef.current;
+          if (current && current !== "…") {
+            void playVoice(current, { force: true });
+          }
         }}
       >
         <span className="c-lisa_sound-icon -on" aria-hidden="true">

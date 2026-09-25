@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 127.0.0.1 -p 3000",
-    "dev:turbo": "next dev --turbopack",
-    "build": "next build",
+    "dev": "node scripts/ensure-api.mjs && next dev -H 127.0.0.1 -p 3000",
+    "dev:turbo": "node scripts/ensure-api.mjs && next dev --turbopack",
+    "build": "node scripts/ensure-api.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "build:pages": "GITHUB_PAGES=true next build",

@@ -36,14 +36,14 @@ function StaticStage() {
           opacity: 0.35,
         }}
       >
-        AVA
+        Robby
       </div>
     </div>
   );
 }
 
 /**
- * AVA media stage for Sewer Squad.
+ * Robby media stage for Sewer Squad.
  * Real browsers: 3D character. Facebook/etc: static branded stage + chat UI.
  */
 export function LisaMedia({

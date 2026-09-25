@@ -177,11 +177,22 @@ function pickBrowserVoice(locale: Locale): SpeechSynthesisVoice | null {
     const name = `${v.name} ${v.lang}`.toLowerCase();
     let score = 0;
     if (v.lang.toLowerCase().startsWith(want)) score += 50;
-    if (/(google|natural|enhanced|premium|siri|neural)/.test(name)) score += 40;
-    if (/(samantha|karen|moira|aria|jenny|ava|zoe|victoria|amelie|marie)/.test(name))
-      score += 30;
-    if (/(female|woman)/.test(name)) score += 10;
-    if (/(male|david|daniel|alex)/.test(name) && !/female/.test(name)) score -= 20;
+    if (/(google|natural|enhanced|premium|siri|neural)/.test(name)) score += 20;
+    if (
+      /(alex|aaron|arthur|daniel|david|fred|george|guy|james|mark|rishi|thomas|mathieu|henri|male)/.test(
+        name
+      ) &&
+      !/female/.test(name)
+    ) {
+      score += 40;
+    }
+    if (
+      /(samantha|karen|moira|aria|jenny|ava|zoe|victoria|amelie|marie|nicky|susan|zira|female|woman)/.test(
+        name
+      )
+    ) {
+      score -= 40;
+    }
     return { v, score };
   });
   scored.sort((a, b) => b.score - a.score);
@@ -243,7 +254,7 @@ async function speakWithBrowser(
         const utter = new SpeechSynthesisUtterance(chunk);
         utter.lang = locale === "fr" ? "fr-FR" : "en-US";
         utter.rate = 1;
-        utter.pitch = 1.05;
+        utter.pitch = 0.92;
         utter.volume = 1;
         if (voice) utter.voice = voice;
         let settled = false;

@@ -612,18 +612,22 @@ async function synthesizeSharedTts(text, locale) {
   const chunks = splitTtsChunks(text);
   if (!chunks.length) throw new Error("empty_text");
   // Unify language tag (same voice on every device)
-  const tl = locale === "fr" ? "fr" : "en";
+  const voice = locale === "fr"
+    ? { lang: "fr", engine: "g3" }
+    : { lang: "en-US", engine: "g3" };
   const parts = [];
   for (const chunk of chunks) {
     const url =
-      `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}` +
-      `&q=${encodeURIComponent(chunk)}`;
+      "https://texttospeech.responsivevoice.org/v1/text:synthesize" +
+      `?text=${encodeURIComponent(chunk)}` +
+      `&lang=${voice.lang}&engine=${voice.engine}&name=` +
+      "&pitch=0.5&rate=0.5&volume=1&gender=male";
     const res = await fetch(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Accept: "*/*",
-        Referer: "https://translate.google.com/",
+        Accept: "audio/mpeg,*/*",
+        Referer: "https://responsivevoice.org/",
       },
     });
     if (!res.ok) throw new Error(`tts_http_${res.status}`);
@@ -657,7 +661,7 @@ export default {
         service: "dooogs-api",
         chat: "workers-ai+free-llm+ollama",
         stt: WHISPER_MODEL,
-        tts: "shared-google",
+        tts: "shared-male",
         model: WORKERS_AI_MODEL,
       });
     }

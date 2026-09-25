@@ -5,7 +5,7 @@
     "isCompact": true,
     "dialog": {
       "list": {
-        "ava.intro.1": "Hi, how can we help?<br><br>I’m <strong>AVA</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
+        "ava.intro.1": "Hi, how can we help?<br><br>I’m <strong>Robby</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
       }
     },
     "media": []
@@ -14,7 +14,7 @@
     "progress": 0.2,
     "dialog": {
       "list": {
-        "ava.chat.1": "Hi, how can we help?<br><br>I’m <strong>AVA</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
+        "ava.chat.1": "Hi, how can we help?<br><br>I’m <strong>Robby</strong> for <strong>Sewer Squad</strong>. Plumbing and drains across the GTA, 24/7. Emergency, quote, booking, or a quick question?"
       }
     },
     "choices": [

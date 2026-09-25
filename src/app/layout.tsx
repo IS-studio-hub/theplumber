@@ -25,10 +25,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "AVA | Sewer Squad",
+  title: "Robby | Sewer Squad",
   description:
-    "AVA helps Sewer Squad customers with emergencies, quotes, and bookings for plumbing and drains across the GTA, 24/7.",
-  applicationName: "AVA",
+    "Robby helps Sewer Squad customers with emergencies, quotes, and bookings for plumbing and drains across the GTA, 24/7.",
+  applicationName: "Robby",
   referrer: "strict-origin-when-cross-origin",
   formatDetection: {
     telephone: false,
@@ -36,17 +36,17 @@ export const metadata: Metadata = {
     address: false,
   },
   openGraph: {
-    title: "AVA | Sewer Squad",
+    title: "Robby | Sewer Squad",
     description:
-      "Chat with AVA for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
-    siteName: "AVA | Sewer Squad",
+      "Chat with Robby for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
+    siteName: "Robby | Sewer Squad",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AVA | Sewer Squad",
+    title: "Robby | Sewer Squad",
     description:
-      "Chat with AVA for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
+      "Chat with Robby for Sewer Squad: emergencies, quotes, and bookings across the GTA.",
   },
   icons: {
     icon: [

@@ -1,5 +1,5 @@
 /**
- * Free HTTP TTS used on every device (mobile + desktop share the same audio).
+ * Shared male TTS used on every device (mobile + desktop share the same audio).
  * Chunks long lines so mobile never gets a truncated/different voice path.
  */
 
@@ -25,17 +25,25 @@ function splitChunks(text: string, maxLen = 160): string[] {
   return out;
 }
 
-async function fetchGoogleChunk(text: string, locale: "en" | "fr"): Promise<ArrayBuffer> {
-  const tl = locale === "fr" ? "fr" : "en";
+const MALE_VOICE = {
+  en: { lang: "en-US", engine: "g3" },
+  fr: { lang: "fr", engine: "g3" },
+} as const;
+
+/** US/French male voice, shared by every device. */
+async function fetchMaleChunk(text: string, locale: "en" | "fr"): Promise<ArrayBuffer> {
+  const voice = MALE_VOICE[locale];
   const url =
-    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}` +
-    `&q=${encodeURIComponent(text)}`;
+    "https://texttospeech.responsivevoice.org/v1/text:synthesize" +
+    `?text=${encodeURIComponent(text)}` +
+    `&lang=${voice.lang}&engine=${voice.engine}&name=` +
+    "&pitch=0.5&rate=0.5&volume=1&gender=male";
   const res = await fetch(url, {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      Accept: "*/*",
-      Referer: "https://translate.google.com/",
+      Accept: "audio/mpeg,*/*",
+      Referer: "https://responsivevoice.org/",
     },
   });
   if (!res.ok) throw new Error(`tts_http_${res.status}`);
@@ -53,7 +61,7 @@ export async function synthesizeSharedTts(
 
   const parts: Uint8Array[] = [];
   for (const chunk of chunks) {
-    const buf = await fetchGoogleChunk(chunk, locale);
+    const buf = await fetchMaleChunk(chunk, locale);
     parts.push(new Uint8Array(buf));
     // Gentle pacing so the service stays happy
     await new Promise((r) => setTimeout(r, 40));

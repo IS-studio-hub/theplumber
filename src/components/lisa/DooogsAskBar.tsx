@@ -384,8 +384,8 @@ export function DooogsAskBar({
           placeholder={
             conversation && disabled
               ? locale === "fr"
-                ? "AVA répond…"
-                : "AVA is answering…"
+                ? "Robby répond…"
+                : "Robby is answering…"
               : conversation
                 ? locale === "fr"
                   ? "Je vous écoute… parlez naturellement"
