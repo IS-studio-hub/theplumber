@@ -3,8 +3,6 @@
 import type { Locale } from "@/lib/lisa-types";
 import { AvaLogo } from "@/components/layout/AvaLogo";
 import Link from "next/link";
-import { withBase } from "@/lib/base-path";
-import { useEffect, useState } from "react";
 
 const copy = {
   en: {
@@ -17,11 +15,7 @@ const copy = {
 
 export function Header({ locale }: { locale: Locale }) {
   const t = copy[locale];
-  const [dashHref, setDashHref] = useState(`/${locale}/dashboard`);
-
-  useEffect(() => {
-    setDashHref(withBase(`/${locale}/dashboard`));
-  }, [locale]);
+  // next/link prefixes basePath itself. Do not wrap with withBase or GitHub Pages doubles it.
 
   return (
     <>
@@ -35,7 +29,7 @@ export function Header({ locale }: { locale: Locale }) {
           </div>
 
           <div className="c-header_actions">
-            <Link href={dashHref} className="c-header_btn">
+            <Link href={`/${locale}/dashboard`} className="c-header_btn">
               {t.dash}
             </Link>
           </div>

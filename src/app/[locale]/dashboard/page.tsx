@@ -15,7 +15,6 @@ import {
   type DashboardStats,
 } from "@/lib/ava-leads";
 import { SEWER_SQUAD } from "@/lib/sewer-squad";
-import { withBase } from "@/lib/base-path";
 
 type Filter = "all" | "bookings" | "qualified" | "leads" | "live";
 
@@ -439,7 +438,7 @@ export default function AvaDashboardPage() {
           >
             {fr ? "Retirer démos" : "Clear demos"}
           </button>
-          <Link className="ava-dash_back" href={withBase(`/${locale}`)}>
+          <Link className="ava-dash_back" href={`/${locale}`}>
             {fr ? "← Chat AVA" : "← AVA chat"}
           </Link>
         </div>
